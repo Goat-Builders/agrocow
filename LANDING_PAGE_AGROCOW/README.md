@@ -1,9 +1,9 @@
-# AgroCow · web de presentación
+﻿# AgroCow · web de presentación
 
 Sitio estático (Vite + JavaScript, sin backend) para el pitch en vivo: 8 diapositivas (Inicio, Problema, Por qué, Solución, Demo, Mercado, Negocio, Cierre). Los textos viven en [`src/content.js`](src/content.js) y siguen el guion del pitch: pocas palabras, una palabra clave (`*así*`) por diapositiva y la fuente de cada cifra en la nota al pie.
 
 ```bash
-cd web
+cd LANDING_PAGE_AGROCOW
 npm install
 npm run dev       # http://localhost:5173/
 npm run build     # genera dist/ (rutas relativas: sirve en GitHub Pages o Vercel)

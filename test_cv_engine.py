@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 
+from agrotrack_cv.config import AgroTrackConfig
 from agrotrack_cv.engine import AgroTrackEngine
 
 
@@ -17,10 +18,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Prueba del motor AgroTrack CV")
     parser.add_argument("--input", required=True, help="Video de entrada")
     parser.add_argument("--output", default="outputs/output.mp4", help="MP4 anotado de salida")
+    parser.add_argument("--zones", default=None,
+                        help='JSON con polígonos normalizados, p. ej. {"feeding_zone": [[0,0],[1,0],[1,0.2],[0,0.2]]}')
     parser.add_argument("--json", default=None, help="Ruta opcional para guardar el resultado completo")
     args = parser.parse_args()
 
-    result = AgroTrackEngine().process_video(input_path=args.input, output_path=args.output)
+    config = AgroTrackConfig()
+    if args.zones:
+        with open(args.zones, encoding="utf-8") as fh:
+            config = AgroTrackConfig(zones_normalized=json.load(fh))
+    result = AgroTrackEngine(config).process_video(input_path=args.input, output_path=args.output)
 
     video, summary = result["video"], result["summary"]
     print(f"Video: {video['width']}x{video['height']} @ {video['fps']} fps, "

@@ -34,14 +34,17 @@ class DetectorTracker:
     def reset(self) -> None:
         """Reinicia el estado de tracking y EMA para procesar un video nuevo."""
         self._smooth.clear()
-        # Fuerza a Ultralytics a reconstruir el predictor (y con él el tracker).
-        self.model.predictor = None
+        # Reinicia los trackers en el lugar. Recrear el predictor registraría
+        # callbacks duplicados y el tracker se actualizaría varias veces por frame.
+        predictor = getattr(self.model, "predictor", None)
+        for tracker in getattr(predictor, "trackers", None) or []:
+            tracker.reset()
 
     def step(self, frame: np.ndarray) -> List[Detection]:
         results = self.model.track(
             frame,
             persist=True,
-            tracker="bytetrack.yaml",
+            tracker=self.config.tracker,
             classes=[COW_CLASS_ID],
             conf=self.config.conf_threshold,
             verbose=False,

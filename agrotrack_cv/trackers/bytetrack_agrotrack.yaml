@@ -1,0 +1,10 @@
+# ByteTrack ajustado para corrales: más memoria ante oclusiones y menos
+# tracks nuevos espurios. Solo cambian track_buffer, new_track_thresh y
+# match_thresh respecto de bytetrack.yaml de Ultralytics.
+tracker_type: bytetrack
+track_high_thresh: 0.25
+track_low_thresh: 0.1
+new_track_thresh: 0.4
+track_buffer: 90
+match_thresh: 0.9
+fuse_score: True

@@ -5,12 +5,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
+import os
+
 import numpy as np
 
 COW_CLASS_ID = 19  # COCO: "cow"
 
 # Orden de prioridad para solapamientos (el primero que contiene el punto gana).
 ZONE_PRIORITY: Tuple[str, ...] = ("feeding_zone", "hydration_zone", "general_zone")
+
+# YAML de ByteTrack propio incluido en el paquete (usar "bytetrack.yaml" para el original).
+DEFAULT_TRACKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trackers", "bytetrack_agrotrack.yaml")
 
 NormalizedPolygon = List[Tuple[float, float]]
 
@@ -38,6 +43,8 @@ class AgroTrackConfig:
     # Ancho mínimo de caja como fracción del ancho del frame; descarta animales
     # muy lejanos cuyo tracking es inestable. 0.0 desactiva el filtro.
     min_box_width_ratio: float = 0.04
+    # Configuración de ByteTrack: nombre builtin de Ultralytics o ruta a un YAML propio.
+    tracker: str = DEFAULT_TRACKER
 
     # --- Suavizado y ruido ---
     ema_alpha: float = 0.30
@@ -84,9 +91,13 @@ class AgroTrackConfig:
     def __post_init__(self) -> None:
         if not 0.0 < self.ema_alpha <= 1.0:
             raise ValueError("ema_alpha debe estar en (0, 1].")
-        for name in ZONE_PRIORITY:
-            if name not in self.zones_normalized:
-                raise ValueError(f"Falta el polígono de la zona '{name}'.")
+        unknown = set(self.zones_normalized) - set(ZONE_PRIORITY)
+        if unknown:
+            raise ValueError(f"Zonas desconocidas: {sorted(unknown)}. Válidas: {list(ZONE_PRIORITY)}.")
+        # Las zonas no provistas conservan su polígono por defecto.
+        merged = _default_zones()
+        merged.update({k: [tuple(p) for p in v] for k, v in self.zones_normalized.items()})
+        self.zones_normalized = merged
         for name, poly in self.zones_normalized.items():
             if len(poly) < 3:
                 raise ValueError(f"La zona '{name}' necesita al menos 3 vértices.")
@@ -95,6 +106,11 @@ class AgroTrackConfig:
                     raise ValueError(
                         f"La zona '{name}' tiene un vértice fuera de [0, 1]: ({x}, {y})."
                     )
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> "AgroTrackConfig":
+        """Crea una config desde un dict (p. ej. JSON). Las claves desconocidas fallan."""
+        return cls(**data)
 
     def scaled_zones(self, width: int, height: int) -> Dict[str, np.ndarray]:
         """Escala los polígonos normalizados al tamaño real del video.

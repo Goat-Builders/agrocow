@@ -97,7 +97,29 @@ AgroCow no detecta fiebre aftosa ni otras enfermedades de denuncia obligatoria. 
 
 ## Salida de ejemplo
 
-> **Ilustrativo.** La estructura sale del código (`engine.py`, `zones.py`, `events.py`, `test_cv_engine.py`). Los **valores son inventados** para mostrar el formato, no provienen de un video real. Todavía no hay una corrida de referencia con un video de campo (ver [Limitaciones](#limitaciones-y-supuestos)).
+### Corrida real (2026-11-07)
+
+Se corrió `test_cv_engine.py` sin cambios sobre [«Cows feeding on hay.webm»](https://commons.wikimedia.org/wiki/File:Cows_feeding_on_hay.webm), un video de Wikimedia Commons con licencia CC0: 9 s, vertical (1080×1920), vacas junto a un comedero, cámara de mano. **No es un corral con cámara fija**, así que no mide desempeño. Sirve para comprobar que el pipeline corre de punta a punta.
+
+```text
+Video: 1080x1920 @ 29.605 fps, 267 frames (9.019 s), codec=avc1
+Animales únicos: 7 | máx. simultáneos: 5 | promedio: 2.29
+  feeding_zone: visitas=0 animales=0 permanencia=0.0 s (prom/visita 0.0 s)
+  hydration_zone: visitas=4 animales=4 permanencia=5.472 s (prom/visita 1.368 s)
+  general_zone: visitas=6 animales=6 permanencia=15.166 s (prom/visita 2.528 s)
+Eventos: 0 (0 críticos)
+```
+
+Qué muestra esta corrida:
+
+- Las vacas se detectan y reciben ID con su confianza y zona en el video anotado.
+- **`unique_animals = 7` con 5 animales como máximo a la vez.** Dos de esos IDs duran 0,17 s cada uno: cortes de tracking, no animales nuevos. Es el efecto que advierte la tabla de [Qué mide exactamente hoy](#qué-mide-exactamente-hoy).
+- Las zonas por defecto (comedero arriba del cuadro, bebedero en la esquina inferior derecha) no corresponden a esta escena: el "comedero" cae sobre el cielo y las 0 visitas no dicen nada del comportamiento de las vacas. Para otra cámara hay que definir las zonas con `--zones`.
+- 0 eventos: 9 s no alcanzan para el aislamiento (mínimo 10 s) ni para la inmovilidad (15 s). La regla de actividad grupal sí podía dispararse (5 s de calentamiento y 2 s de mínimo), pero no hubo un salto de velocidad del grupo que la activara.
+
+### Formato de los eventos (ilustrativo)
+
+> **Ilustrativo.** La estructura sale del código (`engine.py`, `zones.py`, `events.py`, `test_cv_engine.py`). Los **valores son inventados**: la corrida real de arriba no generó eventos, y todavía no hay una corrida de referencia con un video de campo (ver [Limitaciones](#limitaciones-y-supuestos)).
 
 Salida del CLI:
 
@@ -209,7 +231,13 @@ print(result["summary"])
 
 `process_video` procesa un video a la vez por instancia (usa un lock, porque el modelo y el tracker guardan estado).
 
-**Qué se verificó al escribir esto:** que `python test_cv_engine.py --help` corre y muestra los tres argumentos de arriba. **No se verificó una corrida completa**: en el entorno de la auditoría no estaba instalado `ultralytics` ni había un video de prueba.
+**Qué se verificó:** una corrida completa, en un entorno virtual nuevo, con Python 3.14.4 en Windows 11, `ultralytics` 8.4.204, `torch` 2.15.0, `opencv-python` 5.0.0.93 y `numpy` 2.5.4 (ver [Corrida real](#corrida-real-2026-11-07)). Detalles que aparecieron:
+
+- En la primera corrida, Ultralytics instaló `lap` por su cuenta (lo necesita ByteTrack) y pidió reiniciar el comando para que tomara efecto. `lap` no figura en `requirements.txt`, así que esa instalación depende de que haya internet en la primera ejecución.
+- OpenCV imprimió un error de `libopenh264` al abrir el escritor de video. El MP4 igual quedó legible (267 cuadros, H.264), pero pesó unos 67 MB para 9 s.
+- El texto del video anotado (la barra superior) está en inglés; el resto de la salida, en español.
+
+No se probó en Linux ni macOS.
 
 ## Limitaciones y supuestos
 

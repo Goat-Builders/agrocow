@@ -10,40 +10,69 @@
   <meta property="og:description" content="Saber a qué vaca mirar primero. Visión por computadora para ganado bovino. Prototipo.">
   <meta property="og:type" content="website">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <!-- La intro de marca corre una vez por sesión y no se repite al recargar en medio de una presentación. -->
+  <script>try{var h=location.hash;if(location.search.indexOf('nointro')>-1||sessionStorage.getItem('agrocow-intro')||(h&&h!=='#inicio')){document.documentElement.classList.add('no-intro')}else{sessionStorage.setItem('agrocow-intro','1')}}catch(e){}</script>
 </head>
 <body>
   <a class="skip" href="#contenido">Saltar al contenido</a>
 
-  <header class="top">
-    <a class="brand" href="#inicio" data-goto="0">AgroCow</a>
+  <!-- Símbolos compartidos -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Marca: encuadre de detección con una vaca adentro -->
+      <symbol id="logo" viewBox="0 0 64 64">
+        <path d="M8 22V12a4 4 0 0 1 4-4h10M42 8h10a4 4 0 0 1 4 4v10M56 42v10a4 4 0 0 1-4 4H42M22 56H12a4 4 0 0 1-4-4V42" fill="none" stroke="#E2A93B" stroke-width="5" stroke-linecap="round"/>
+        <ellipse cx="30" cy="34" rx="13" ry="8.5" fill="#EDE8DA"/>
+        <circle cx="45" cy="30" r="5.2" fill="#EDE8DA"/>
+        <rect x="21" y="40" width="3.4" height="8" rx="1.6" fill="#EDE8DA"/>
+        <rect x="34" y="40" width="3.4" height="8" rx="1.6" fill="#EDE8DA"/>
+      </symbol>
+      <symbol id="cow" viewBox="0 0 100 60">
+        <rect x="30" y="42" width="6" height="18" rx="2" fill="#B5AE99"/>
+        <rect x="40" y="42" width="6" height="18" rx="2" fill="#9D9681"/>
+        <rect x="62" y="42" width="6" height="18" rx="2" fill="#B5AE99"/>
+        <rect x="72" y="42" width="6" height="18" rx="2" fill="#9D9681"/>
+        <ellipse cx="52" cy="30" rx="35" ry="19" fill="#C9C2AE"/>
+        <ellipse cx="40" cy="26" rx="9" ry="6" fill="#1D3125" opacity=".55"/>
+        <ellipse cx="62" cy="34" rx="7" ry="5" fill="#1D3125" opacity=".55"/>
+        <ellipse cx="88" cy="25" rx="11" ry="9" fill="#B5AE99"/>
+        <ellipse cx="94" cy="28" rx="4" ry="3" fill="#1D3125"/>
+        <rect x="14" y="20" width="5" height="26" rx="2.5" fill="#B5AE99"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- Intro de marca: corta, no bloquea (ni clics ni teclado) y se salta con movimiento reducido -->
+  <div class="intro" id="intro" aria-hidden="true">
+    <div class="intro-box">
+      <svg class="intro-logo" viewBox="0 0 64 64"><use href="#logo"/></svg>
+      <span class="intro-word">AgroCow</span>
+      <span class="intro-tag">id 01 · bovino</span>
+    </div>
+  </div>
+
+  <header class="top glass">
+    <a class="brand" href="#inicio" data-goto="0" aria-label="AgroCow, ir al inicio">
+      <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#logo"/></svg>
+      <span>AgroCow</span>
+    </a>
     <nav class="top-nav" aria-label="Capítulos" id="topNav"></nav>
     <div class="hud" id="hud">
       <button type="button" class="icon-btn" id="btnPrev" aria-label="Capítulo anterior"><span aria-hidden="true">‹</span></button>
-      <div class="hud-count" aria-hidden="true"><span id="hudNum">00</span><span class="hud-sep"> / 06</span><span class="hud-label" id="hudLabel">Inicio</span></div>
+      <div class="hud-count" aria-hidden="true"><span id="hudNum">00</span><span class="hud-sep">/ 06</span><span class="hud-label" id="hudLabel">Inicio</span></div>
       <button type="button" class="icon-btn" id="btnNext" aria-label="Capítulo siguiente"><span aria-hidden="true">›</span></button>
       <button type="button" class="icon-btn" id="btnFs" aria-label="Pantalla completa" aria-pressed="false"><span aria-hidden="true">⛶</span></button>
     </div>
     <div class="progress" aria-hidden="true"><div class="progress-bar" id="progress"></div></div>
   </header>
 
+  <!-- Atajo con el mouse: no se enfoca con Tab (ya están el menú de arriba y el teclado) -->
+  <nav class="dock glass" id="dock" aria-hidden="true"></nav>
+
   <!-- Mundo: capas con parallax detrás del contenido. Decorativo. -->
   <div class="stage" id="stage" aria-hidden="true">
-    <svg width="0" height="0" style="position:absolute">
-      <defs>
-        <symbol id="cow" viewBox="0 0 100 60">
-          <rect x="30" y="42" width="6" height="18" rx="2" fill="#B5AE99"/>
-          <rect x="40" y="42" width="6" height="18" rx="2" fill="#9D9681"/>
-          <rect x="62" y="42" width="6" height="18" rx="2" fill="#B5AE99"/>
-          <rect x="72" y="42" width="6" height="18" rx="2" fill="#9D9681"/>
-          <ellipse cx="52" cy="30" rx="35" ry="19" fill="#C9C2AE"/>
-          <ellipse cx="40" cy="26" rx="9" ry="6" fill="#1D3125" opacity=".55"/>
-          <ellipse cx="62" cy="34" rx="7" ry="5" fill="#1D3125" opacity=".55"/>
-          <ellipse cx="88" cy="25" rx="11" ry="9" fill="#B5AE99"/>
-          <ellipse cx="94" cy="28" rx="4" ry="3" fill="#1D3125"/>
-          <rect x="14" y="20" width="5" height="26" rx="2.5" fill="#B5AE99"/>
-        </symbol>
-      </defs>
-    </svg>
+    <div class="glow glow-a"></div>
+    <div class="glow glow-b"></div>
 
     <svg class="layer l-far" viewBox="0 0 3200 400" preserveAspectRatio="xMinYMax slice">
       <path d="M0 260 C 300 150 600 290 960 220 C 1300 150 1600 280 1950 210 C 2300 140 2700 270 3200 190 L3200 400 L0 400 Z" fill="#122017"/>

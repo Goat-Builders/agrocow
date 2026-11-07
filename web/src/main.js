@@ -16,31 +16,33 @@ $('#figNote').textContent = hero.figureNote;
 const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reduced = () => reduceQuery.matches;
 const LAST = chapters.length - 1; // 6 capítulos numerados + Inicio
+const pad = (n) => String(n).padStart(2, '0');
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 /* ------------------------------------------------------------------ render */
 const head = (n, label) =>
-  `<div class="chap-head" data-reveal><span>${String(n).padStart(2, '0')} / 0${LAST}</span><span class="rule"></span><span class="name">${label}</span></div>`;
+  `<div class="chap-head" data-reveal><span class="n">${pad(n)} / ${pad(LAST)}</span><span class="rule"></span><span>${label}</span></div>`;
+const plate = (inner) => `<div class="plate glass glass--plate">${inner}</div>`;
 
 function renderHero() {
+  const title = hero.titleParts.map((p) => (typeof p === 'string' ? p : `<span class="mark">${p.mark}</span>`)).join('');
   return `
   <section class="chapter chapter--hero" id="inicio" data-i="0" aria-labelledby="t-inicio">
     <div class="hero-grid">
-      <div class="hero-copy">
-        <p class="eyebrow" data-reveal>${hero.eyebrow}</p>
-        <h1 id="t-inicio" tabindex="-1" data-reveal>${hero.title}</h1>
+      <div class="hero-copy glass glass--plate">
+        <p class="status-pill glass glass--soft" data-reveal><span class="pill-dot" aria-hidden="true"></span>${hero.status}</p>
+        <h1 id="t-inicio" tabindex="-1" data-reveal>${title}</h1>
         <p class="lead" data-reveal>${hero.lead}</p>
-        <p class="status-pill" data-reveal>${hero.status}</p>
+        <p class="audience" data-reveal>${hero.audience}</p>
         <div class="cta-row" data-reveal>
-          <a class="btn btn--primary" href="#problema" data-goto="1">${hero.ctaPrimary}</a>
-          <a class="btn btn--ghost" href="#pipeline" data-goto="2">${hero.ctaSecondary}</a>
+          <a class="btn glass-cta" href="#problema" data-goto="1">${hero.ctaPrimary} <span aria-hidden="true">→</span></a>
+          <a class="link-quiet" href="${REPO_URL}" target="_blank" rel="noopener">${hero.ctaSecondary} <span aria-hidden="true">↗</span></a>
         </div>
-        <ul class="keys" aria-label="Atajos de teclado" data-reveal>
-          <li class="muted">Modo presentación</li>
-          ${keys.map((k) => `<li>${k.k.map((x) => `<kbd>${x}</kbd>`).join(' ')} ${k.t}</li>`).join('')}
+        <ul class="proofs" aria-label="Qué entrega" data-reveal>
+          ${hero.proofs.map((p) => `<li class="glass glass--soft"><span class="corner" aria-hidden="true"></span>${p}</li>`).join('')}
         </ul>
       </div>
-      <div class="hero-art" role="img" aria-label="${hero.figureLabel}">
-      </div>
+      <div class="hero-art" role="img" aria-label="${hero.figureLabel}"></div>
     </div>
   </section>`;
 }
@@ -49,23 +51,27 @@ function renderProblem() {
   const p = problem;
   return `
   <section class="chapter" id="problema" data-i="1" aria-labelledby="t-problema">
-    <div class="plate plate--alt">
+    ${plate(`
       ${head(1, 'Problema')}
-      <div class="problem-grid">
-        <div class="problem-left">
-          <h2 id="t-problema" tabindex="-1" class="wide" data-reveal>${p.title}</h2>
-          <p class="lead" data-reveal>${p.lead}</p>
-          <div class="evidence" data-reveal>
-            <p>${p.evidence.text}</p>
-            <p class="caveat">${p.evidence.caveat}</p>
-            <a class="cite" href="${p.evidence.href}" target="_blank" rel="noopener">Fuente: ${p.evidence.cite}</a>
-          </div>
-        </div>
-        <ol class="problem-cards">
-          ${p.cards.map((c, i) => `<li class="card card-n" data-reveal><span class="n">${String(i + 1).padStart(2, '0')}</span><div><h3>${c.title}</h3><p>${c.text}</p></div></li>`).join('')}
-        </ol>
+      <h2 id="t-problema" tabindex="-1" data-reveal>${p.title}</h2>
+      <div class="compare" data-reveal>
+        <div class="tile tile--before"><span class="tile-label">${p.before.label}</span><p>${p.before.text}</p></div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="tile tile--after"><span class="tile-label">${p.after.label}</span><p>${p.after.text}</p></div>
       </div>
-    </div>
+      <div class="problem-row">
+        <div data-reveal>
+          <p class="sub-label">${p.cardsTitle}</p>
+          <ul class="mini-cards">
+            ${p.cards.map((c) => `<li class="tile"><h3>${c.title}</h3><p>${c.text}</p></li>`).join('')}
+          </ul>
+        </div>
+        <div class="evidence" data-reveal>
+          <p>${p.evidence.text}</p>
+          <p class="caveat">${p.evidence.caveat}</p>
+          <a class="cite" href="${p.evidence.href}" target="_blank" rel="noopener">Fuente: ${p.evidence.cite}</a>
+        </div>
+      </div>`)}
   </section>`;
 }
 
@@ -73,15 +79,14 @@ function renderPipeline() {
   const p = pipeline;
   return `
   <section class="chapter" id="pipeline" data-i="2" aria-labelledby="t-pipeline">
-    <div class="plate">
+    ${plate(`
       ${head(2, 'Pipeline')}
-      <h2 id="t-pipeline" tabindex="-1" class="wide" data-reveal>${p.title}</h2>
-      <ol class="steps">
-        ${p.steps.map((s, i) => `<li class="step" data-reveal><div class="step-top"><span>${String(i + 1).padStart(2, '0')}</span><span class="rule"></span></div><h3>${s.title}</h3><p>${s.text}</p></li>`).join('')}
+      <h2 id="t-pipeline" tabindex="-1" data-reveal>${p.title}</h2>
+      <ol class="steps" data-line>
+        ${p.steps.map((s, i) => `<li class="step tile" data-reveal><span class="step-n glass glass--soft">${pad(i + 1)}</span><h3>${s.title}</h3><p>${s.text}</p></li>`).join('')}
       </ol>
-      <div class="outputs" data-reveal><span>${p.outputsLabel}</span>${p.outputs.map((o) => `<span class="chip">${o}</span>`).join('')}</div>
-      <p class="note" data-reveal>${p.note}</p>
-    </div>
+      <div class="outputs" data-reveal><span>${p.outputsLabel}</span>${p.outputs.map((o) => `<span class="chip glass glass--soft">${o}</span>`).join('')}</div>
+      <p class="note" data-reveal>${p.note}</p>`)}
   </section>`;
 }
 
@@ -89,20 +94,19 @@ function renderSignals() {
   const s = signals;
   return `
   <section class="chapter" id="senales" data-i="3" aria-labelledby="t-senales">
-    <div class="plate plate--alt">
+    ${plate(`
       ${head(3, 'Señales')}
       <div data-reveal>
-        <h2 id="t-senales" tabindex="-1" class="wide">${s.title}</h2>
-        <p class="lead" style="margin-top:.75rem">${s.lead}</p>
+        <h2 id="t-senales" tabindex="-1">${s.title}</h2>
+        <p class="lead" style="margin-top:.5rem">${s.lead}</p>
       </div>
       <div class="sig-grid" data-reveal>
         <div class="sig-list" role="group" aria-label="Señales" id="sigList">
-          ${s.items.map((it, i) => `<button type="button" class="sig-btn" data-sig="${i}" aria-pressed="false" tabindex="-1"><span class="n">${String(i + 1).padStart(2, '0')}</span><span>${it.title}</span></button>`).join('')}
+          ${s.items.map((it, i) => `<button type="button" class="sig-btn glass glass--soft" data-sig="${i}" aria-pressed="false" tabindex="-1"><span class="n">${pad(i + 1)}</span><span>${it.title}</span></button>`).join('')}
         </div>
-        <div class="sig-detail" id="sigDetail" aria-live="polite"></div>
+        <div class="sig-detail tile" id="sigDetail" aria-live="polite"></div>
       </div>
-      <p class="note" data-reveal>${s.footnote} Con ↑ ↓ cambiás de señal.</p>
-    </div>
+      <p class="note" data-reveal>${s.footnote} Con <kbd>↑</kbd> <kbd>↓</kbd> cambiás de señal.</p>`)}
   </section>`;
 }
 
@@ -110,43 +114,59 @@ function renderLimits() {
   const l = limits;
   return `
   <section class="chapter" id="limites" data-i="4" aria-labelledby="t-limites">
-    <div class="plate">
+    ${plate(`
       ${head(4, 'Límites')}
-      <h2 id="t-limites" tabindex="-1" class="wide" data-reveal>${l.title}</h2>
+      <div data-reveal>
+        <h2 id="t-limites" tabindex="-1">${l.title}</h2>
+        <p class="lead" style="margin-top:.5rem">${l.lead}</p>
+      </div>
       <ul class="limit-grid">
-        ${l.cards.map((c) => `<li class="card" data-reveal><h3>${c.title}</h3><p>${c.text}</p></li>`).join('')}
-      </ul>
-    </div>
+        ${l.cards.map((c) => `<li class="tile" data-reveal><h3>${c.title}</h3><p>${c.text}</p></li>`).join('')}
+      </ul>`)}
   </section>`;
 }
 
 function renderOutput() {
   const o = output;
+  const r = o.realRun;
   return `
   <section class="chapter" id="salida" data-i="5" aria-labelledby="t-salida">
-    <div class="plate plate--alt">
+    ${plate(`
       ${head(5, 'Salida')}
       <div data-reveal>
-        <h2 id="t-salida" tabindex="-1" class="wide">${o.title}</h2>
-        <p class="lead" style="margin-top:.75rem">${o.lead}</p>
+        <h2 id="t-salida" tabindex="-1">${o.title}</h2>
+        <p class="lead" style="margin-top:.5rem">${o.lead}</p>
       </div>
       <div class="out-grid">
-        <div data-reveal>
-          <div class="code" tabindex="0" role="region" aria-label="Estructura del JSON de salida"><pre><code>${o.jsonLines.join('\n').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</code></pre></div>
-          <p class="caption">${o.jsonCaption}</p>
+        <figure class="run" data-reveal>
+          <div class="run-frame">
+            <img src="${r.img}" alt="${r.alt}" width="720" height="1280" loading="lazy" decoding="async">
+            <span class="run-tag">${r.tag}</span>
+          </div>
+          <figcaption class="run-caption">${r.caption}</figcaption>
+          <ul class="run-facts">${r.facts.map((f) => `<li>${f}</li>`).join('')}</ul>
+          <a class="credit" href="${r.creditHref}" target="_blank" rel="noopener">${r.credit}</a>
+        </figure>
+        <div class="panes" data-reveal>
+          <div class="seg glass glass--soft" role="group" aria-label="Qué mostrar">
+            <button type="button" data-pane="json" aria-pressed="true">Estructura del JSON</button>
+            <button type="button" data-pane="events" aria-pressed="false">${o.eventsTitle}</button>
+          </div>
+          <div class="pane" id="pane-json">
+            <div class="code" tabindex="0" role="region" aria-label="Estructura del JSON de salida"><pre><code>${esc(o.jsonLines.join('\n'))}</code></pre></div>
+            <p class="caption">${o.jsonCaption}</p>
+          </div>
+          <div class="pane events tile" id="pane-events" hidden>
+            <table>
+              <thead><tr><th scope="col">Evento y regla</th><th scope="col">${o.colWarn}</th><th scope="col">${o.colCrit}</th></tr></thead>
+              <tbody>
+                ${o.events.map((e) => `<tr><td class="ev"><span class="type">${e.type}</span><span class="rule">${e.rule}</span></td><td class="num">${e.warn}</td><td class="num">&gt; ${e.crit}</td></tr>`).join('')}
+              </tbody>
+            </table>
+            <p class="note">${o.eventsNote}</p>
+          </div>
         </div>
-        <div class="events" data-reveal>
-          <h3>${o.eventsTitle}</h3>
-          <table>
-            <thead><tr><th scope="col">Evento y regla</th><th scope="col">${o.colWarn}</th><th scope="col">${o.colCrit}</th></tr></thead>
-            <tbody>
-              ${o.events.map((e) => `<tr><td class="ev"><span class="type">${e.type}</span><span class="rule">${e.rule}</span></td><td class="num">${e.warn}</td><td class="num">&gt; ${e.crit}</td></tr>`).join('')}
-            </tbody>
-          </table>
-          <p class="note">${o.eventsNote}</p>
-        </div>
-      </div>
-    </div>
+      </div>`)}
   </section>`;
 }
 
@@ -155,24 +175,26 @@ function renderStatus() {
   const marker = { si: 'dot--si', dev: 'dot--parcial', plan: 'dot--no' };
   return `
   <section class="chapter" id="estado" data-i="6" aria-labelledby="t-estado">
-    <div class="plate">
+    ${plate(`
       ${head(6, 'Estado')}
-      <h2 id="t-estado" tabindex="-1" class="wide" data-reveal>${s.title}</h2>
+      <h2 id="t-estado" tabindex="-1" data-reveal>${s.title}</h2>
       <div class="status-grid">
         ${s.columns.map((c) => `
-          <div class="status-col" data-reveal>
+          <div class="status-col tile" data-reveal>
             <h3><span class="dot ${marker[c.key]}" aria-hidden="true"></span>${c.label}</h3>
             ${c.note ? `<p class="tag">${c.note}</p>` : ''}
             <ul>${c.items.map((i) => `<li>${i}</li>`).join('')}</ul>
           </div>`).join('')}
       </div>
+      <div class="closing glass glass--soft" data-reveal>
+        <div><h3>${s.closing.title}</h3><p>${s.closing.text}</p></div>
+        <a class="btn glass-cta" href="${REPO_URL}" target="_blank" rel="noopener">${s.closing.cta} <span aria-hidden="true">↗</span></a>
+      </div>
       <div class="foot" data-reveal>
         ${TEAM.length ? `<span>Equipo: ${TEAM.join(' · ')}</span>` : ''}
         ${EVENT_NAME ? `<span>${EVENT_NAME} · 10 horas</span>` : ''}
-        <a href="${REPO_URL}" target="_blank" rel="noopener">github.com/felipebridge/agrocow</a>
-        <a class="back" href="#inicio" data-goto="0">${s.backToStart}</a>
-      </div>
-    </div>
+        <a href="#inicio" data-goto="0">${s.backToStart}</a>
+      </div>`)}
   </section>`;
 }
 
@@ -181,8 +203,18 @@ $('#contenido').innerHTML = [
 ].join('');
 
 $('#topNav').innerHTML = chapters.slice(1)
-  .map((c, i) => `<a href="#${c.id}" data-goto="${i + 1}">${String(i + 1).padStart(2, '0')} ${c.label}</a>`)
+  .map((c, i) => `<a href="#${c.id}" data-goto="${i + 1}">${pad(i + 1)} ${c.label}</a>`)
   .join('');
+$('#dock').innerHTML = chapters
+  .map((c, i) => `<a href="#${c.id}" data-goto="${i}" tabindex="-1"><span>${i ? `${pad(i)} ` : ''}${c.label}</span></a>`)
+  .join('');
+
+// Atajos de presentador: una leyenda fija que solo se ve en el Inicio.
+document.body.insertAdjacentHTML('beforeend', `
+  <ul class="keys-hint glass glass--soft" aria-label="Atajos de teclado">
+    <li>Modo presentación</li>
+    ${keys.map((k) => `<li>${k.k.map((x) => `<kbd>${x}</kbd>`).join(' ')} ${k.t}</li>`).join('')}
+  </ul>`);
 
 // Escalonado del revelado dentro de cada capítulo.
 $$('.chapter').forEach((ch) => $$('[data-reveal]', ch).forEach((el, i) => el.style.setProperty('--d', Math.min(i, 10))));
@@ -195,7 +227,7 @@ function renderSignalDetail(i) {
   const it = signals.items[i];
   const f = signals.fields;
   $('#sigDetail').innerHTML = `
-    <div class="field"><span class="label">Señal ${String(i + 1).padStart(2, '0')}</span><h3>${it.title}</h3></div>
+    <div class="field"><span class="label">Señal ${pad(i + 1)}</span><h3>${it.title}</h3></div>
     <dl style="margin:0;display:flex;flex-direction:column;gap:1rem">
       <div class="field"><dt>${f.indica}</dt><dd>${it.indica}</dd></div>
       <div class="field"><dt>${f.camara}</dt><dd>${it.camara}</dd></div>
@@ -220,6 +252,34 @@ function selectSignal(i, { focus = false } = {}) {
 }
 sigButtons.forEach((b, n) => b.addEventListener('click', () => selectSignal(n)));
 selectSignal(0);
+
+/* ----------------------------------------- Salida: JSON / eventos (sin flechas) */
+const segButtons = $$('.seg button');
+segButtons.forEach((b) => b.addEventListener('click', () => {
+  segButtons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  $('#pane-json').hidden = b.dataset.pane !== 'json';
+  $('#pane-events').hidden = b.dataset.pane !== 'events';
+}));
+
+/* ------------------------------------------------- rendimiento: modo liviano */
+// ?lite=1 lo fuerza, ?lite=0 lo apaga (y desactiva la detección). Tecla L: alterna.
+const liteParam = new URLSearchParams(location.search).get('lite');
+let liteDecided = liteParam !== null;
+function setLite(on, why = '') {
+  document.documentElement.classList.toggle('lite', on);
+  try { sessionStorage.setItem('agrocow-lite', on ? '1' : '0'); } catch { /* sin storage */ }
+  if (why) $('#live').textContent = on ? 'Modo liviano activado' : 'Modo liviano desactivado';
+}
+if (liteParam === '1') setLite(true);
+else if (liteParam === null) { try { if (sessionStorage.getItem('agrocow-lite') === '1') { setLite(true); liteDecided = true; } } catch { /* sin storage */ } }
+
+const perf = { n: 0, slow: 0 };
+let movingTimer = 0;
+function markMoving() {
+  document.body.classList.add('moving');
+  clearTimeout(movingTimer);
+  movingTimer = setTimeout(() => document.body.classList.remove('moving'), 160);
+}
 
 /* ------------------------------------------------------------ navegación */
 const sections = $$('.chapter');
@@ -250,9 +310,9 @@ function indexFromScroll() {
 function setActive(i, { announce = false, hash = true } = {}) {
   cur = i;
   document.body.dataset.ch = String(i);
-  hudNum.textContent = String(i).padStart(2, '0');
+  hudNum.textContent = pad(i);
   hudLabel.textContent = chapters[i].label;
-  $$('#topNav a').forEach((a) => {
+  $$('#topNav a, #dock a').forEach((a) => {
     if (Number(a.dataset.goto) === i) a.setAttribute('aria-current', 'step');
     else a.removeAttribute('aria-current');
   });
@@ -277,11 +337,18 @@ function scrollToY(target, instant) {
   const dur = 800;
   const t0 = performance.now();
   animating = true;
+  let prev = 0;
   const step = (now) => {
+    if (prev && !liteDecided) { const d = now - prev; if (d < 400) { perf.n += 1; if (d > 40) perf.slow += 1; } }
+    prev = now;
     const t = Math.min(1, (now - t0) / dur);
     window.scrollTo(0, start + dist * easeOut(t));
     if (t < 1) rafAnim = requestAnimationFrame(step);
-    else animating = false;
+    else {
+      animating = false;
+      // Si más de la mitad de los cuadros (de al menos 10, acumulados entre transiciones) tardó más de 40 ms, pasa solo a modo liviano.
+      if (!liteDecided && perf.n >= 10) { liteDecided = true; if (perf.slow / perf.n > 0.5) setLite(true, 'auto'); }
+    }
   };
   rafAnim = requestAnimationFrame(step);
 }
@@ -305,6 +372,8 @@ const layers = [
   { el: $('.l-far'), k: 3.5 },
   { el: $('.l-mid'), k: 8 },
   { el: $('.l-near'), k: 15 },
+  { el: $('.glow-a'), k: 2 },
+  { el: $('.glow-b'), k: 5 },
 ];
 
 function frame() {
@@ -331,7 +400,7 @@ function frame() {
     if (now !== cur) setActive(now);
   }
 }
-const onScroll = () => { if (!rafScroll) rafScroll = requestAnimationFrame(frame); };
+const onScroll = () => { markMoving(); if (!rafScroll) rafScroll = requestAnimationFrame(frame); };
 window.addEventListener('scroll', onScroll, { passive: true });
 const remeasure = () => { measure(); onScroll(); };
 window.addEventListener('resize', remeasure);
@@ -342,7 +411,18 @@ document.fonts?.ready.then(remeasure);
 const io = new IntersectionObserver((entries) => {
   entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
 }, { threshold: 0.12 });
-$$('[data-reveal]').forEach((el) => io.observe(el));
+$$('[data-reveal], [data-line]').forEach((el) => io.observe(el));
+
+/* ------------------------------------------- brillo del vidrio que sigue al mouse */
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  document.addEventListener('pointermove', (e) => {
+    const g = e.target instanceof Element ? e.target.closest('.glass') : null;
+    if (!g) return;
+    const r = g.getBoundingClientRect();
+    g.style.setProperty('--mx', `${(e.clientX - r.left).toFixed(0)}px`);
+    g.style.setProperty('--my', `${(e.clientY - r.top).toFixed(0)}px`);
+  }, { passive: true });
+}
 
 /* --------------------------------------------------------- pantalla completa */
 function toggleFullscreen() {
@@ -383,6 +463,7 @@ document.addEventListener('keydown', (e) => {
   if (key === 'End') return go(LAST);
   if (/^[1-6]$/.test(key) && !e.shiftKey) return go(Number(key));
   if (key === 'f' || key === 'F') { e.preventDefault(); if (!e.repeat) toggleFullscreen(); return; }
+  if (key === 'l' || key === 'L') { e.preventDefault(); if (!e.repeat) { liteDecided = true; setLite(!document.documentElement.classList.contains('lite'), 'manual'); } return; }
 
   // En "Señales" las flechas ↑ ↓ recorren la lista.
   if ((key === 'ArrowDown' || key === 'ArrowUp') && cur === 3) {
@@ -402,6 +483,9 @@ if (initial > 0) {
 }
 frame();
 window.addEventListener('load', remeasure);
+
+// La intro de marca no bloquea nada (pointer-events: none): se quita del DOM al terminar.
+setTimeout(() => $('#intro')?.remove(), 2300);
 
 // Para pruebas automáticas.
 window.__agrocow = { goTo, get current() { return cur; }, get signal() { return sigIndex; } };

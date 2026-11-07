@@ -1,19 +1,33 @@
-// ÚNICA fuente de textos de la web. Todo sale del README.md del repo (commit c7f85a0).
+// ÚNICA fuente de textos de la web. Todo sale del README.md del repo (commit fa5060f).
 // Si el README cambia, se actualiza acá. No agregar cifras ni capacidades que el README no declare.
+//
+// Propuesta de valor (framework de persuasión del vault, con la regla anti-tryhard):
+//   Gancho .......... hero.title
+//   Empatía ......... problem (Hoy)
+//   Mecanismo ....... pipeline + hero.proofs
+//   Prueba .......... output.realRun (corrida real, con sus límites) + problem.evidence
+//   Riesgo invertido  hero.proofs[2] (cada alerta se verifica en el video) + limits
+//   CTA único ....... "Empezar recorrido" / "Ver el código en GitHub"
+// Sin escasez, sin urgencia, sin testimonios ni cifras de impacto: el proyecto no los tiene.
 
 export const REPO_URL = 'https://github.com/felipebridge/agrocow';
 
-// Nombres del equipo y del hackathon: pendientes. Si el array está vacío no se muestra nada.
 export const TEAM = ['Matías Rodrigo Bellido', 'Felipe Bridge', 'Emiliano Lescuras', 'Valentin Ruvera'];
 export const EVENT_NAME = '';
 
 export const hero = {
-  eyebrow: 'Visión por computadora · ganado bovino',
-  title: 'Saber a qué vaca mirar primero.',
-  lead: 'AgroCow analiza el video del corral: detecta y sigue solo bovinos, mide cuánto tiempo pasan en el comedero y el bebedero, y marca desvíos de conducta para que una persona los revise.',
-  status: 'Prototipo · todavía sin evaluación de precisión',
+  status: 'Prototipo · sin evaluación de precisión todavía',
+  // `mark` dibuja el encuadre de detección (motivo de la marca) alrededor de la palabra.
+  titleParts: ['Saber a qué ', { mark: 'vaca' }, ' mirar primero.'],
+  lead: 'AgroCow convierte el video del corral en una lista corta de animales para revisar: detecta y sigue solo bovinos, mide cuánto usan el comedero y el bebedero, y marca desvíos de conducta.',
+  audience: 'Para productores y veterinarios que cuidan un lote y no pueden mirar a todos los animales todo el día.',
   ctaPrimary: 'Empezar recorrido',
-  ctaSecondary: 'Ver cómo funciona',
+  ctaSecondary: 'Ver el código',
+  proofs: [
+    'Un ID por animal dentro del video',
+    'Cada desvío llega con hora y severidad',
+    'Cada alerta se verifica en el video anotado',
+  ],
   figureLabel:
     'Ilustración de un corral visto desde una cámara: tres vacas con cajas de detección y una zona de comedero marcada',
   figureNote: 'Ilustración conceptual. No es salida real del modelo.',
@@ -21,7 +35,15 @@ export const hero = {
 
 export const problem = {
   title: 'Un animal que no está bien suele cambiar su conducta antes de que se note a simple vista.',
-  lead: 'Observar un lote lleva tiempo y es intermitente por definición. AgroCow revisa el video de forma continua y señala dónde mirar.',
+  before: {
+    label: 'Hoy',
+    text: 'Detectarlo depende de que alguien mire a esa vaca en el momento justo. Observar un lote lleva tiempo y es intermitente por definición.',
+  },
+  after: {
+    label: 'Con AgroCow',
+    text: 'El video del corral se revisa de forma continua y cada desvío llega como un evento con hora, animal y severidad, listo para que una persona lo revise.',
+  },
+  cardsTitle: 'Lo que cambia en la conducta',
   cards: [
     { title: 'Come distinto', text: 'Va menos al comedero o se queda menos tiempo.' },
     { title: 'Se aparta del grupo', text: 'Pasa más tiempo lejos del resto del lote.' },
@@ -103,22 +125,23 @@ export const signals = {
 
 export const limits = {
   title: 'AgroCow no diagnostica. Prioriza a qué animal mirar primero.',
+  lead: 'Lo que hoy no hace, dicho de entrada.',
   cards: [
     { title: 'No reemplaza al veterinario', text: 'Cada alerta es una señal para revisar, no un diagnóstico.' },
     {
-      title: 'Hay enfermedades fuera de alcance',
-      text: 'Lo que requiere laboratorio, como brucelosis o tuberculosis, no se ve en video. Una alerta tampoco reemplaza la denuncia de sospecha de aftosa al SENASA.',
+      title: 'No cubre lo que pide laboratorio',
+      text: 'Brucelosis o tuberculosis no se ven en video. Una alerta tampoco reemplaza la denuncia de sospecha de aftosa al SENASA.',
     },
     {
       title: 'Mide presencia, no ingesta',
       text: 'Cuenta cuánto está el animal dentro de la zona de alimentación. No ve si come.',
     },
     {
-      title: 'Todavía no hay evaluación',
+      title: 'Todavía no está evaluado',
       text: 'No hay dataset etiquetado ni métricas de precisión, recall o falsos positivos. Avisar de más cansa y avisar de menos demora: el umbral es una decisión de costos.',
     },
     {
-      title: 'Seguir a una vaca entre días es lo difícil',
+      title: 'No sigue a una vaca entre días',
       text: 'Dentro de un video, el tracker alcanza. Entre días hace falta caravana visible o patrón de pelaje. Hoy los ID se reinician en cada video.',
     },
   ],
@@ -126,7 +149,20 @@ export const limits = {
 
 export const output = {
   title: 'Una salida pensada para integrarse.',
-  lead: 'Un JSON con el resumen, las métricas por zona y los eventos con su timestamp, más el video anotado para verificar cada alerta a ojo.',
+  lead: 'Un JSON con resumen, zonas y eventos con timestamp, más el video anotado para verificar cada alerta a ojo.',
+  realRun: {
+    img: './real-run.jpg',
+    alt: 'Fotograma del video anotado: cuatro vacas con caja, número de ID, confianza y zona',
+    tag: 'Corrida real',
+    caption: 'Fotograma del video anotado. Es un video de prueba (CC0, 9 s), no un corral con cámara fija.',
+    facts: [
+      'Hasta 5 vacas detectadas a la vez',
+      '7 IDs en total: dos duran 0,17 s (cortes de tracking)',
+      'Las zonas por defecto no calzan con esta escena',
+    ],
+    credit: 'Video: «Cows feeding on hay», Wikimedia Commons',
+    creditHref: 'https://commons.wikimedia.org/wiki/File:Cows_feeding_on_hay.webm',
+  },
   jsonCaption: 'Estructura real de la salida. Los valores se omiten.',
   jsonLines: [
     '{',
@@ -146,7 +182,6 @@ export const output = {
     '  ]',
     '}',
   ],
-
   eventsTitle: 'Los tres eventos de hoy',
   eventsNote: 'Severidad por duración: aviso al llegar al mínimo, crítico al superar el doble. Umbrales sin calibrar.',
   events: [
@@ -185,6 +220,11 @@ export const status = {
       ],
     },
   ],
+  closing: {
+    title: 'Saber a qué vaca mirar primero.',
+    text: 'Un prototipo que ya corre de punta a punta. Lo que falta es evaluarlo con datos de campo.',
+    cta: 'Ver el código en GitHub',
+  },
   backToStart: 'Volver al inicio',
 };
 
@@ -203,4 +243,5 @@ export const keys = [
   { k: ['←'], t: 'anterior' },
   { k: ['1–6'], t: 'ir a capítulo' },
   { k: ['F'], t: 'pantalla completa' },
+  { k: ['L'], t: 'modo liviano' },
 ];

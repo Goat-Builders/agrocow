@@ -20,8 +20,23 @@ npm run preview   # sirve dist/ para probarlo
 | `Home` / `End` | Inicio / último capítulo |
 | `↑` `↓` | En "Señales": cambiar de señal |
 | `F` | Pantalla completa |
+| `L` | Modo liviano (sin desenfoque del vidrio). También se activa solo si la presentación va a menos de ~25 cuadros por segundo |
 
 Con `prefers-reduced-motion` no hay parallax y los saltos son instantáneos.
+
+## Parámetros de URL (para pruebas)
+
+| Parámetro | Efecto |
+|---|---|
+| `?nointro` | Salta la intro de marca (por defecto corre una vez por sesión y no bloquea nada) |
+| `?lite=1` / `?lite=0` | Fuerza el modo liviano / lo apaga y desactiva la detección automática |
+
+## Diseño
+
+- **Identidad:** el encuadre de detección que dibuja el propio producto (esquinas ámbar, etiqueta `id NN`) es el motivo de marca. Ámbar solo para la acción principal, la posición actual y los encuadres.
+- **Liquid Glass en tres superficies:** vidrio (header, placas, controles), vidrio teñido ámbar (el botón principal) y plano (el resto). Tokens de espaciado, radios y tipografía en `src/styles.css`.
+- **Rendimiento (medido):** el desenfoque sobre un fondo que se mueve es lo más caro. Las placas grandes pierden el blur mientras se desplaza la página, y hay un modo liviano automático o con `L`.
+- **Contraste:** con vidrio, axe no puede medirlo; se midió con píxeles reales (texto invisible en la captura, peor píxel de fondo por línea).
 
 ## Pendientes
 

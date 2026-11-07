@@ -2,7 +2,7 @@
 
 Detecta y sigue bovinos en video de corral, mide cuánto tiempo pasan en el comedero y el bebedero, y marca desvíos de conducta (aislamiento, inmovilidad prolongada, cambios bruscos de actividad del grupo) para que una persona los revise.
 
-> **Estado: prototipo temprano.** El motor corre de punta a punta sobre un video y entrega un JSON y un MP4 anotado. **No tiene evaluación de precisión todavía**: no hay dataset etiquetado ni métricas de aciertos y falsos positivos. Tampoco hay tests automatizados. Auditado sobre el commit `cb697df` de `main` (2026-11-07).
+> **Estado: prototipo temprano.** El motor corre de punta a punta sobre un video y entrega un JSON y un MP4 anotado. **No tiene evaluación de precisión todavía**: no hay dataset etiquetado ni métricas de aciertos y falsos positivos. Tampoco hay tests automatizados. Auditado sobre el commit `6a30a74` de `main` (2026-11-07).
 
 ## Qué NO es
 
@@ -37,7 +37,7 @@ flowchart LR
 
 1. **Lectura de video** con OpenCV, cuadro por cuadro.
 2. **Detección solo de bovinos.** YOLO11n preentrenado en COCO, filtrado a la clase `cow` (índice 19) con umbral de confianza 0,30. Además se descartan las cajas con un ancho menor al 4 % del ancho del cuadro (`min_box_width_ratio`), para dejar afuera animales muy lejanos con tracking inestable; con `0.0` el filtro se desactiva. Personas, vehículos, perros y otras clases quedan fuera del filtro; no se midió cuántas veces se confunde otro animal con una vaca.
-3. **Tracking** con ByteTrack (viene con Ultralytics). Asigna un `track_id` por animal dentro del video.
+3. **Tracking** con ByteTrack (viene con Ultralytics) y una configuración propia, [`bytetrack_agrotrack.yaml`](agrotrack_cv/trackers/bytetrack_agrotrack.yaml): según su comentario, más memoria ante oclusiones (`track_buffer: 90`) y menos tracks nuevos espurios (`new_track_thresh: 0.4`, `match_thresh: 0.9`). No hay mediciones que muestren cuánto mejora. Asigna un `track_id` por animal dentro del video.
 4. **Punto basal suavizado.** De cada caja se toma el centro del borde inferior (aproximadamente los pies) y se lo suaviza con un promedio exponencial. Ese punto es el que se usa para zonas, distancias e inmovilidad.
 5. **Zonas y eventos.** Se asigna cada animal a una zona (con histéresis de 0,5 s para evitar parpadeos), se acumulan visitas y permanencia, y tres reglas heurísticas generan eventos.
 
@@ -52,7 +52,7 @@ flowchart LR
 | `animals[]` | Por track: primer y último instante, tiempo visible, distancia en píxeles, velocidad media en px/s, zonas visitadas, trayectoria submuestreada. | La distancia está en píxeles, sin calibración a metros. Depende de la perspectiva de la cámara. |
 | `counts_timeseries` | Conteo de animales cada 0,5 s. | |
 
-**Sobre la zona de alimentación.** Por defecto es la franja superior del cuadro (25 % de alto), y el bebedero es la esquina inferior derecha. Eso supone una cámara fija con el comedero arriba de la imagen. Las zonas son polígonos en coordenadas normalizadas que se cambian desde Python (`AgroTrackConfig(zones_normalized=...)`), pero **el CLI no las expone**. Como la pertenencia se decide con el punto basal y no con la cabeza, una vaca parada junto al comedero sin comer cuenta igual que una que come, y la perspectiva puede dejar los pies fuera del polígono aunque la cabeza esté en el comedero.
+**Sobre la zona de alimentación.** Por defecto es la franja superior del cuadro (25 % de alto), y el bebedero es la esquina inferior derecha. Eso supone una cámara fija con el comedero arriba de la imagen. Las zonas son polígonos en coordenadas normalizadas [0, 1] que se cambian con el argumento `--zones` del CLI (ruta a un archivo JSON) o desde Python (`AgroTrackConfig(zones_normalized=...)`). Se pueden redefinir solo algunas: las que no se pasan conservan su polígono por defecto, y un nombre de zona desconocido da error. Como la pertenencia se decide con el punto basal y no con la cabeza, una vaca parada junto al comedero sin comer cuenta igual que una que come, y la perspectiva puede dejar los pies fuera del polígono aunque la cabeza esté en el comedero.
 
 ## Qué alerta
 
@@ -152,7 +152,7 @@ El MP4 anotado dibuja las zonas, la caja de cada animal con su ID, confianza y z
 
 ## Estado del proyecto
 
-Auditoría de lectura del código en `main`, commit `cb697df`. Las filas marcadas *(a confirmar)* son decisiones del equipo que no se pueden deducir del repo.
+Auditoría de lectura del código en `main`, commit `6a30a74`. Las filas marcadas *(a confirmar)* son decisiones del equipo que no se pueden deducir del repo.
 
 | Capacidad | Estado |
 |---|---|
@@ -163,7 +163,7 @@ Auditoría de lectura del código en `main`, commit `cb697df`. Las filas marcada
 | Conteo, serie temporal y resumen por animal | Implementado |
 | Eventos: aislamiento, inmovilidad prolongada, cambio de actividad grupal | Implementado, **umbrales sin calibrar** |
 | Salida JSON y CLI de prueba | Implementado |
-| Configuración de umbrales y zonas | Implementado en Python (`AgroTrackConfig`); no desde el CLI |
+| Configuración de umbrales y zonas | Implementado en Python (`AgroTrackConfig`, también `AgroTrackConfig.from_dict`). Desde el CLI, solo las zonas (`--zones`) |
 | Métricas de evaluación (precisión/recall por evento, falsos positivos por animal-día) | Planificado *(a confirmar)* |
 | Tests automatizados | Planificado *(a confirmar)* |
 | Detección de cabeza o pose (cabeza en zona de alimentación, cojera) | Planificado *(a confirmar)* |
@@ -192,6 +192,7 @@ python test_cv_engine.py --input uploads/input.mp4 --output outputs/output.mp4 -
 |---|---|---|
 | `--input` | Sí | Video de entrada. Si no existe, falla con `FileNotFoundError`. |
 | `--output` | No (por defecto `outputs/output.mp4`) | MP4 anotado. La carpeta se crea sola. |
+| `--zones` | No | Ruta a un archivo JSON con polígonos normalizados, por ejemplo `{"feeding_zone": [[0,0],[1,0],[1,0.2],[0,0.2]]}`. El texto de ayuda del CLI habla de "JSON" a secas, pero el código abre el argumento como archivo. |
 | `--json` | No | Guarda el resultado completo. La carpeta debe existir; si está en la misma que `--output`, ya existe. |
 
 El repo no incluye videos de ejemplo ni las carpetas `uploads/` y `outputs/`: pasá la ruta de tu propio video. El modelo `yolo11n.pt` lo gestiona Ultralytics (normalmente lo descarga la primera vez).
@@ -251,6 +252,8 @@ agrocow/
     ├── analytics.py           # conteo temporal y resumen por animal
     ├── events.py              # EventEngine: las tres reglas de eventos
     ├── video_processor.py     # dibujo del video anotado y escritura del MP4
+    ├── trackers/
+    │   └── bytetrack_agrotrack.yaml   # configuración propia de ByteTrack
     ├── requirements.txt
     └── .gitignore
 ```

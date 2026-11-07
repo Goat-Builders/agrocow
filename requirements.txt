@@ -1,0 +1,18 @@
+# Motor de Computer Vision (ultralytics instala PyTorch)
+-r agrotrack_cv/requirements.txt
+
+# Backend
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+pydantic>=2.6
+
+# Frontend
+streamlit>=1.50
+plotly>=5.20
+requests>=2.31
+pandas>=2.0
+
+# Tests
+pytest>=8.0
+httpx>=0.27

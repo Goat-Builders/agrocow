@@ -170,7 +170,7 @@ Auditoría de lectura del código en `main`, commit `6a30a74`. Las filas marcada
 | Clasificación de postura (parada/echada) para vaca caída | Planificado *(a confirmar)* |
 | Línea base por lote o por animal y alertas por desvío de alimentación | Planificado *(a confirmar)* |
 | Re-identificación entre días | Planificado *(a confirmar)* |
-| API o servicio (hoy solo hay CLI y una clase de Python) | Planificado *(a confirmar)* |
+| API REST (FastAPI + SQLite) y dashboard (Streamlit) sobre el motor | Implementado (MVP). Ver [Aplicación AGROTRACK AI](#aplicación-agrotrack-ai-api--dashboard) |
 | Trabajo en curso de otros integrantes | En desarrollo *(a confirmar: el repo tiene un solo commit)* |
 
 ## Quickstart
@@ -211,6 +211,75 @@ print(result["summary"])
 
 **Qué se verificó al escribir esto:** que `python test_cv_engine.py --help` corre y muestra los tres argumentos de arriba. **No se verificó una corrida completa**: en el entorno de la auditoría no estaba instalado `ultralytics` ni había un video de prueba.
 
+## Aplicación AGROTRACK AI (API + dashboard)
+
+Capa de aplicación sobre el motor: sube videos MP4, los procesa en segundo plano con `AgroTrackEngine`, guarda los resultados en SQLite y los muestra en un dashboard. **No contiene lógica de visión**: llama a `AgroTrackEngine.process_video` y guarda lo que devuelve. No se probó con el motor real y un video de campo (ver [Qué se verificó](#qué-se-verificó-de-la-aplicación)).
+
+```bash
+pip install -r requirements.txt
+
+# Terminal 1 - backend (desde la raíz del repo)
+uvicorn backend.main:app --reload          # http://localhost:8000/docs
+
+# Terminal 2 - dashboard
+streamlit run frontend/app.py              # http://localhost:8501
+```
+
+Variables opcionales: `AGROTRACK_API_URL` (backend visto por Streamlit, por defecto `http://localhost:8000`), `AGROTRACK_PUBLIC_API_URL` (backend visto por el navegador, para reproducir el video; por defecto igual a la anterior), `AGROTRACK_TZ` (zona horaria de las fechas, por defecto `America/Argentina/Buenos_Aires`), `AGROTRACK_DB_PATH`, `AGROTRACK_UPLOADS_DIR`, `AGROTRACK_OUTPUTS_DIR`.
+
+### API
+
+| Endpoint | Descripción |
+|---|---|
+| `POST /api/videos/upload` | Sube un MP4 (multipart, campo `file`). Estado inicial `uploaded`. |
+| `POST /api/videos/{id}/process` | Encola el procesamiento (202). 409 si ya está en cola o procesando. Reprocesar reemplaza los resultados. |
+| `GET /api/videos/{id}/status` | `uploaded` → `queued` → `processing` → `completed` / `failed` (con el motivo en `error`). |
+| `GET /api/dashboard/summary` | Indicadores generales. |
+| `GET /api/analytics/counts` · `tracking` · `events` · `zones` | Resultados guardados. Aceptan `?video_id=`; sin él devuelven todos los videos completados. `events` también filtra por `severity` y `event_type`. |
+
+Además, para que el dashboard funcione: `GET /api/videos` (historial), `GET /api/videos/{id}/output` (MP4 anotado) y `GET /api/health`.
+
+El procesamiento corre en un único hilo trabajador dentro del proceso de la API (sin Celery ni Redis): los videos se procesan de a uno, en orden. Si el servidor se reinicia, lo que estaba en cola o procesando queda como `failed` y hay que reprocesarlo. El motor no informa progreso, así que el estado no incluye porcentaje.
+
+### Contrato con el motor
+
+Todo el acoplamiento está en [`backend/services/engine_adapter.py`](backend/services/engine_adapter.py). El backend asume solo esto, que es la interfaz pública actual de `agrotrack_cv`:
+
+```python
+from agrotrack_cv import AgroTrackEngine
+result = AgroTrackEngine().process_video(input_path, output_path)   # dict
+```
+
+`result` debe tener estas claves y campos (el adaptador los valida; si falta alguno, el video queda en `failed` con un mensaje claro y no se guardan datos parciales):
+
+| Clave | Campos usados |
+|---|---|
+| `video` | `width`, `height`, `fps`, `total_frames`, `duration_sec`, `codec`, `zone_polygons_px` |
+| `summary` | `max_heads`, `avg_heads`, `unique_animals`, `total_events`, `critical_events` |
+| `counts_timeseries[]` | `frame`, `timestamp_sec`, `count` |
+| `zones{}` (por zona) | `total_visits`, `unique_animals`, `total_dwell_sec`, `avg_dwell_per_visit_sec`, `per_animal_dwell_sec` |
+| `animals[]` | `track_id`, `first_seen_sec`, `last_seen_sec`, `total_visible_sec`, `distance_px`, `avg_speed_px_s`, `zones_visited`, `trajectory` (`[[x, y], ...]` en px) |
+| `events[]` | `event_id`, `event_type`, `track_id` (puede ser `null`), `severity` (`warning`/`critical`), `start_timestamp_sec`, `end_timestamp_sec`, `duration_seconds`, `metric_value`, `zone`, `start_frame`, `end_frame`, `description` |
+
+Para conectar otro motor: reemplazar `_build_engine()` por una fábrica que devuelva un objeto con `process_video(input_path, output_path) -> dict` y respetar la tabla. El motor escribe el MP4 anotado en `output_path` (`outputs/video_<id>.mp4`).
+
+### Dashboard
+
+Secciones: **Overview** (indicadores e historial), **Video Analysis** (subir, procesar, estado en vivo, reproducir, resultados), **Livestock Tracking** (conteo en el tiempo, trayectorias, heatmap, movimiento), **Behavioral Intelligence** (eventos, animales aislados, nivel de alerta) y **Zone Analytics** (comedero, bebedero, permanencia). Las secciones de detalle usan el video elegido en la barra lateral. Sin datos muestran un estado vacío: **nada se inventa ni se rellena**.
+
+Cosas a tener en cuenta al leer los números:
+- «Animales únicos» del Overview es la **suma de tracking IDs por video**; los IDs se reinician en cada video, así que no equivale a animales distintos.
+- «Fecha y hora» de los eventos es el momento en que se **procesó** el video; el motor no recibe la fecha de grabación. El instante dentro del video se muestra aparte.
+- El heatmap se arma con las trayectorias submuestreadas que entrega el motor (cada 5 cuadros por defecto), en píxeles.
+- Si el motor usa el codec `mp4v` (respaldo cuando no hay H.264), muchos navegadores no reproducen el video; el dashboard avisa y ofrece descarga.
+
+### Qué se verificó de la aplicación
+
+- `pytest tests` (4 pruebas) cubre subida, procesamiento en segundo plano, persistencia, consultas, reprocesado, errores y violación del contrato. **Usa un motor de prueba que cumple el contrato**, no YOLO.
+- Las cinco secciones del dashboard se ejecutaron contra la API real, con datos de ese motor de prueba y con base vacía (estados vacíos), sin excepciones.
+- **No se corrió el motor real** (`ultralytics`/PyTorch no se pudieron instalar en el entorno de desarrollo) ni se miró el dashboard en un navegador. Falta una corrida de punta a punta con un video de campo.
+- Sin autenticación: la API acepta cualquier cliente que llegue al puerto. No exponer a internet tal cual.
+
 ## Limitaciones y supuestos
 
 - **Sin evaluación.** No hay dataset etiquetado, ni precisión/recall por tipo de evento, ni tasa de falsos positivos por animal-día. Cualquier número sobre desempeño que se cite de este proyecto hoy no tiene respaldo.
@@ -243,6 +312,11 @@ Propuesta derivada de los huecos de arriba, **pendiente de acuerdo con el equipo
 agrocow/
 ├── README.md
 ├── test_cv_engine.py          # CLI de ejecución manual (no es una suite de tests)
+├── requirements.txt           # motor + backend + frontend
+├── backend/                   # FastAPI: main.py, database.py, schemas.py, routes/, services/
+├── frontend/                  # Streamlit: app.py, components/
+├── tests/                     # pruebas de la API (motor de prueba)
+├── uploads/  outputs/         # videos subidos y MP4 anotados (ignorados por git)
 └── agrotrack_cv/
     ├── __init__.py            # exporta AgroTrackEngine y AgroTrackConfig
     ├── engine.py              # AgroTrackEngine.process_video: orquesta el pipeline

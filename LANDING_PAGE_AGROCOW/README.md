@@ -29,6 +29,7 @@ Reglas del brief que la web cumple (y `pitch-test` verifica): máximo 15 palabra
 | Tecla | Acción |
 |---|---|
 | `→`, `↓`, `Espacio`, `PageDown` | Pantalla siguiente |
+| Clic o toque en cualquier parte | Pantalla siguiente (no actúa sobre links, botones ni el video: el clic del video lo pausa) |
 | `←`, `↑`, `PageUp`, `Shift+Espacio` | Pantalla anterior |
 | `1`–`5` | Ir al bloque del guion |
 | `Home` / `End` | Primera / última |

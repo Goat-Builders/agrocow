@@ -225,6 +225,14 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   goTo(Number(a.dataset.goto));
 });
+// Un clic (o toque) en cualquier parte pasa a la pantalla siguiente. No actúa sobre links, botones ni el video
+// (el clic del video lo pausa/reanuda), ni si se estaba seleccionando texto.
+document.addEventListener('click', (e) => {
+  if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  if (e.target.closest('a, button, video, input, select, textarea, summary')) return;
+  if (String(window.getSelection?.() || '').length > 0) return;
+  advance(1);
+});
 document.addEventListener('keydown', (e) => {
   if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
   const t = e.target;

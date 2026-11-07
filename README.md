@@ -2,7 +2,7 @@
 
 Detecta y sigue bovinos en video de corral, mide cuánto tiempo pasan en el comedero y el bebedero, y marca desvíos de conducta (aislamiento, inmovilidad prolongada, cambios bruscos de actividad del grupo) para que una persona los revise.
 
-> **Estado: prototipo temprano.** El motor corre de punta a punta sobre un video y entrega un JSON y un MP4 anotado. **No tiene evaluación de precisión todavía**: no hay dataset etiquetado ni métricas de aciertos y falsos positivos. Tampoco hay tests automatizados. Auditado sobre el commit `f6f08db` (2026-11-07).
+> **Estado: prototipo temprano.** El motor corre de punta a punta sobre un video y entrega un JSON y un MP4 anotado. **No tiene evaluación de precisión todavía**: no hay dataset etiquetado ni métricas de aciertos y falsos positivos. Tampoco hay tests automatizados. Auditado sobre el commit `cb697df` de `main` (2026-11-07).
 
 ## Qué NO es
 
@@ -36,7 +36,7 @@ flowchart LR
 ```
 
 1. **Lectura de video** con OpenCV, cuadro por cuadro.
-2. **Detección solo de bovinos.** YOLO11n preentrenado en COCO, filtrado a la clase `cow` (índice 19) con umbral de confianza 0,30. Personas, vehículos, perros y otras clases quedan fuera del filtro; no se midió cuántas veces se confunde otro animal con una vaca.
+2. **Detección solo de bovinos.** YOLO11n preentrenado en COCO, filtrado a la clase `cow` (índice 19) con umbral de confianza 0,30. Además se descartan las cajas con un ancho menor al 4 % del ancho del cuadro (`min_box_width_ratio`), para dejar afuera animales muy lejanos con tracking inestable; con `0.0` el filtro se desactiva. Personas, vehículos, perros y otras clases quedan fuera del filtro; no se midió cuántas veces se confunde otro animal con una vaca.
 3. **Tracking** con ByteTrack (viene con Ultralytics). Asigna un `track_id` por animal dentro del video.
 4. **Punto basal suavizado.** De cada caja se toma el centro del borde inferior (aproximadamente los pies) y se lo suaviza con un promedio exponencial. Ese punto es el que se usa para zonas, distancias e inmovilidad.
 5. **Zonas y eventos.** Se asigna cada animal a una zona (con histéresis de 0,5 s para evitar parpadeos), se acumulan visitas y permanencia, y tres reglas heurísticas generan eventos.
@@ -152,7 +152,7 @@ El MP4 anotado dibuja las zonas, la caja de cada animal con su ID, confianza y z
 
 ## Estado del proyecto
 
-Auditoría de lectura del código en `main`, commit `f6f08db`. Las filas marcadas *(a confirmar)* son decisiones del equipo que no se pueden deducir del repo.
+Auditoría de lectura del código en `main`, commit `cb697df`. Las filas marcadas *(a confirmar)* son decisiones del equipo que no se pueden deducir del repo.
 
 | Capacidad | Estado |
 |---|---|
@@ -217,6 +217,7 @@ print(result["summary"])
 - **Cámara fija.** Las zonas son polígonos fijos en coordenadas de imagen. Una cámara que se mueve o cambia de encuadre invalida las zonas.
 - **Identidad solo dentro del video.** El tracking dentro de un video es el problema más fácil. Construir una línea base por animal exige reconocerlo entre días, y eso requiere caravana visible, patrón de pelaje o infraestructura de identificación. Hoy los IDs se reinician en cada video y no se guarda historial. Si no se resuelve, la línea base posible es por corral o lote.
 - **Oclusión y hacinamiento.** Con animales superpuestos el tracker puede cortar o cambiar IDs; eso infla `unique_animals` y `total_visits` y fragmenta las permanencias. No se midió.
+- **Animales lejanos.** Los que quedan por debajo del ancho mínimo de caja (4 % del cuadro por defecto) no entran al resultado. Un animal que cruza ese umbral al alejarse o acercarse a la cámara puede aparecer y desaparecer de las métricas. No se midió el efecto.
 - **Condiciones adversas.** No se probó con polvo, barro, contraluz, noche o visión infrarroja, ni con cambios de estación. El modelo es un YOLO11n genérico (el más chico de la familia) sin ajuste a ganado.
 - **Un solo tipo de cuerpo animal.** El detector usa la clase `cow` de COCO. No distingue categorías (vaca, toro, ternero) ni raza.
 - **Sistema productivo sin definir.** Cría, recría, feedlot y tambo tienen patologías, cámaras y valores distintos. El código no declara para cuál está pensado. Las zonas por defecto (comedero arriba, bebedero en una esquina) sugieren un encierre con comedero, pero es una inferencia *(a confirmar con el equipo)*.

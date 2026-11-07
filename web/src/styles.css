@@ -137,7 +137,7 @@ body.moving .glass--plate { -webkit-backdrop-filter: none; backdrop-filter: none
    Un velo con la identidad (verde profundo + luz ámbar) va siempre encima: mantiene el contraste
    del texto y la marca, sin filtros por cuadro sobre el video (serían caros). */
 .stage { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; contain: strict; background: var(--bg); }
-.sc { position: absolute; inset: 0; opacity: 0; will-change: opacity; }
+.sc { position: absolute; inset: 0; opacity: 0; }
 .sc:first-child { opacity: 1; }
 .sc-poster img, .sc-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }
 .sc.has-clip .sc-poster { opacity: 0; }
@@ -156,6 +156,25 @@ body.moving .glass--plate { -webkit-backdrop-filter: none; backdrop-filter: none
 /* fuera de la portada, el fondo se oscurece: manda el contenido */
 .stage::before { z-index: 4; background: rgb(11 21 15 / 0.62); opacity: 0; transition: opacity 600ms var(--ease); }
 body:not([data-ch="0"]) .stage::before { opacity: 1; }
+/* durante la secuencia de visión el video se ve más: el panel tiene su propio fondo */
+.stage::after { transition: opacity 400ms var(--ease); }
+body[data-ch="0"]:not([data-cv="0"]) .stage::after { opacity: 0.45; }
+body[data-ch="0"]:not([data-cv="0"]) .keys-hint { opacity: 0; }
+/* capas del pipeline según la etapa (data-cv en .stage) */
+.sc-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; overflow: visible; pointer-events: none; }
+.sc-boxes, .sc-trails, .sc-zone { transition: opacity 300ms var(--ease); }
+.stage[data-cv="1"] .sc-boxes { opacity: 0; }
+.sc-trails, .sc-zone { opacity: 0; }
+.stage[data-cv="3"] .sc-trails, .stage[data-cv="4"] .sc-trails, .stage[data-cv="5"] .sc-trails { opacity: 1; }
+.stage[data-cv="4"] .sc-zone { opacity: 1; }
+.trail { fill: none; stroke: var(--amber); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+.trail--mint { stroke: var(--mint); }
+.sc-zone polygon { fill: rgb(95 195 165 / 0.14); stroke: var(--mint); stroke-width: 2; stroke-dasharray: 10 8; }
+.sc-zone text { fill: var(--mint); font: 500 13px 'IBM Plex Mono', monospace; }
+.stage[data-cv="5"] .trk { border-color: var(--mint); }
+.stage[data-cv="5"] .trk span { background: var(--mint); }
+.stage .trk.trk--far { border-width: 3px; border-color: var(--amber); box-shadow: 0 0 0 4px rgb(226 169 59 / 0.28); }
+.stage .trk.trk--far span { background: var(--amber); }
 /* celular: el video arriba (las vacas a la vista), el texto abajo */
 @media (max-width: 999px) {
   .sc { bottom: auto; height: 58vh; height: 58svh; }
@@ -195,16 +214,50 @@ h3 { font-size: 1.2rem; line-height: 1.2; font-weight: 700; }
 kbd { font: inherit; color: var(--text); border: 1px solid var(--line-ui); border-radius: 6px; padding: 1px 8px; background: rgb(255 255 255 / 0.05); }
 @media (min-width: 1000px) and (min-height: 700px) { .keys-hint { display: flex; } body[data-ch="0"] .keys-hint { opacity: 1; } }
 
-/* ════════ 0 · INICIO (sin placa: el fondo es la imagen) ════════ */
-#inicio { position: relative; }
+/* ════════ 0 · INICIO: gancho + secuencia del pipeline de visión ════════
+   La sección es más alta que la pantalla (--cv-step por etapa) y su contenido queda fijo (sticky):
+   al bajar, el video avanza y el pipeline se arma etapa por etapa encima. */
+:root { --cv-step: 70vh; }
+#inicio { position: relative; display: block; padding: 0; min-height: 0; height: calc(100vh + 5 * var(--cv-step)); }
+.hero-sticky { position: sticky; top: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; justify-content: center; padding: calc(var(--hdr-top) + var(--hdr-h) + 1rem) var(--gutter) 1.5rem; }
 .hero-grid { width: 100%; max-width: 1360px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; }
-.hero-copy { display: flex; flex-direction: column; gap: var(--s5); align-items: flex-start; max-width: 44rem; }
+.hero-copy, .cv-hud { grid-area: 1 / 1; }
+.hero-copy { display: flex; flex-direction: column; gap: var(--s5); align-items: flex-start; max-width: 44rem; transition: opacity 400ms var(--ease), transform 400ms var(--ease); }
 .hero-copy h1 { margin-top: var(--s1); }
 .hero-copy .lead { color: var(--text); opacity: 0.88; }
 .hero-copy .pill { background: rgb(11 21 15 / 0.88); }
 .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3) var(--s4); }
+#inicio:not([data-cv="0"]) .hero-copy { opacity: 0; transform: translateY(-16px); pointer-events: none; visibility: hidden; transition: opacity 400ms var(--ease), transform 400ms var(--ease), visibility 0s linear 400ms; }
 .hero-note { position: absolute; right: var(--gutter); bottom: 1.25rem; max-width: 26rem; text-align: right; color: var(--muted); }
-@media (max-width: 999px) { .hero-grid { align-items: end; } .hero-note { position: static; text-align: left; margin-top: var(--s5); } }
+.cv-cue { position: absolute; left: 50%; bottom: 4.5rem; transform: translateX(-50%); font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; color: var(--text); opacity: 0.85; transition: opacity 300ms var(--ease); }
+.cv-cue span { display: inline-block; color: var(--amber); }
+#inicio:not([data-cv="0"]) .cv-cue { opacity: 0; }
+
+.cv-hud { align-self: center; justify-self: start; width: min(100%, 25rem); padding: var(--s4) var(--s5); border-radius: var(--r-m); opacity: 0; transform: translateY(16px); pointer-events: none; visibility: hidden; transition: opacity 400ms var(--ease), transform 400ms var(--ease), visibility 0s linear 400ms; }
+#inicio:not([data-cv="0"]) .cv-hud { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+.cv-kicker { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); margin-bottom: var(--s3); }
+.cv-steps { display: flex; flex-direction: column; }
+.cv-steps li { display: flex; gap: var(--s3); align-items: flex-start; padding: var(--s2) 0; border-top: 1px solid rgb(255 255 255 / 0.1); color: var(--muted); }
+.cv-steps li:first-child { border-top: 0; }
+.cv-steps strong { display: block; font-size: 1.05rem; font-weight: 700; transition: font-size 300ms var(--ease), color 300ms var(--ease); }
+.cv-s { display: none; font-size: 0.98rem; color: var(--text); opacity: 0.9; margin-top: var(--s1); }
+.cv-n { width: 1.8rem; height: 1.8rem; flex: none; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--line-ui); font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; }
+.cv-steps li.done .cv-n { border-color: var(--mint); color: var(--mint); }
+.cv-steps li.on { color: var(--text); }
+.cv-steps li.on strong { font-size: 1.4rem; color: var(--text); }
+.cv-steps li.on .cv-s { display: block; }
+.cv-steps li.on .cv-n { background: var(--amber); border-color: var(--amber); color: var(--bg); }
+.cv-metrics { margin-top: var(--s3); font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: var(--muted); min-height: 1.2em; }
+@media (max-width: 999px) {
+  .hero-grid { align-items: end; }
+  .cv-hud { align-self: end; padding: var(--s4); }
+  .cv-steps li:not(.on):not(.done) .cv-s, .cv-steps li.done { display: none; }
+  .hero-sticky { justify-content: flex-end; }
+  .hero-note { position: static; text-align: left; margin-top: var(--s4); }
+  #inicio:not([data-cv="0"]) .hero-note { display: none; }
+  .cv-hud { width: 100%; }
+  .cv-cue { bottom: 1rem; }
+}
 
 /* ════════ 1 · PROBLEMA ════════ */
 .tiles3 { display: grid; gap: var(--s3); grid-template-columns: minmax(0, 1fr); }
@@ -336,7 +389,7 @@ kbd { font: inherit; color: var(--text); border: 1px solid var(--line-ui); borde
 @media (prefers-reduced-motion: reduce) {
   .intro { display: none; }
   .js [data-reveal] { transform: none; transition: opacity 200ms linear; transition-delay: 0ms; }
-  .stage::before { transition: none; }
+  .stage::before, .stage::after, .sc-boxes, .sc-trails, .sc-zone, .hero-copy, .cv-hud, .cv-cue { transition: none; }
   .pane, .ov, .flow-nodes::after, .node-ic { transition: none; }
   .icon-btn, .btn, .top-nav a, .dock a::before, .dock a span { transition: none; }
 }

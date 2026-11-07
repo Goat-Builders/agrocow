@@ -4,7 +4,7 @@ import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
 import { mountScrub } from './scrub.js';
 import {
-  REPO_URL, TEAM, EVENT_NAME, chapters, keys, hero, problem, solution, proof, money, limits, status,
+  REPO_URL, TEAM, EVENT_NAME, chapters, keys, hero, cv, problem, solution, proof, money, limits, status,
 } from './content.js';
 
 document.documentElement.classList.add('js');
@@ -15,6 +15,8 @@ const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reduced = () => reduceQuery.matches;
 const LAST = chapters.length - 1; // 0 = Inicio, 1–6 = diapositivas numeradas
 const pad = (n) => String(n).padStart(2, '0');
+let intent = false; // ¿ya hubo scroll, tecla o toque? (recién ahí se pide el video)
+let scrub = null;
 
 /* ------------------------------------------------------------------ assets */
 // Fotos reales (CC0) en AVIF y WebP, varios anchos. Todo lo que no está en la primera pantalla es lazy.
@@ -67,7 +69,8 @@ const payoutCard = () => `
 function renderHero() {
   const title = hero.titleParts.map((p) => (typeof p === 'string' ? p : `<span class="mark">${p.mark}</span>`)).join('');
   return `
-  <section class="chapter" id="inicio" data-i="0" aria-labelledby="t-inicio">
+  <section class="chapter chapter--hero" id="inicio" data-i="0" data-cv="0" aria-labelledby="t-inicio">
+    <div class="hero-sticky">
     <div class="hero-grid">
       <div class="hero-copy">
         <span class="pill pill--amber"><span class="dot"></span>${hero.status}</span>
@@ -78,7 +81,14 @@ function renderHero() {
           <a class="link-quiet" href="${REPO_URL}" target="_blank" rel="noopener">${hero.ctaSecondary} <span aria-hidden="true">↗</span></a>
         </div>
       </div>
-      <p class="hero-note small">${hero.photoNote}</p>
+      <div class="cv-hud glass" id="cvHud" aria-live="polite">
+        <p class="cv-kicker">${cv.kicker}</p>
+        <ol class="cv-steps">${cv.steps.map((s, i) => `<li data-k="${i + 1}"><span class="cv-n">${i + 1}</span><div><strong>${s.t}</strong><span class="cv-s">${s.s}</span></div></li>`).join('')}</ol>
+        <p class="cv-metrics" id="cvMetrics"></p>
+      </div>
+    </div>
+    <p class="hero-note small">${hero.photoNote}</p>
+    <p class="cv-cue small" aria-hidden="true">${cv.cue} <span>↓</span></p>
     </div>
   </section>`;
 }
@@ -218,6 +228,31 @@ document.body.insertAdjacentHTML('beforeend', `
 // Escalonado del revelado dentro de cada diapositiva.
 $$('.chapter').forEach((ch) => $$('[data-reveal]', ch).forEach((el, i) => el.style.setProperty('--d', Math.min(i, 6))));
 
+/* ------------------------------------ la secuencia de visión (portada, 5 etapas) */
+const CV_STEPS = cv.steps.length;
+const heroEl = $('#inicio');
+const cvMetrics = $('#cvMetrics');
+let cvStage = 0;
+document.body.dataset.cv = '0'; // sin esto, los selectores :not([data-cv="0"]) aplicaban desde el arranque
+const cvStepPx = () => window.innerHeight * 0.7;   // igual que --cv-step en styles.css
+function cvFromScroll() {
+  const y = window.scrollY - (tops[0] || 0);
+  return Math.max(0, Math.min(CV_STEPS, Math.floor((y + cvStepPx() * 0.5) / cvStepPx())));
+}
+function setCv(n) {
+  if (n === cvStage) return;
+  cvStage = n;
+  heroEl.dataset.cv = String(n);
+  document.body.dataset.cv = String(n);
+  scrub?.setStage(n);
+  $$('.cv-steps li').forEach((li) => {
+    const k = Number(li.dataset.k);
+    li.classList.toggle('on', k === n);
+    li.classList.toggle('done', k < n);
+  });
+  if (n === 0) cvMetrics.textContent = '';
+}
+
 /* ------------------------------------------------- el flujo (diapositiva 2) */
 const flowEl = $('#flow');
 const flowNodes = $$('.node', flowEl);
@@ -260,7 +295,7 @@ function setLite(on, why = '') {
   document.documentElement.classList.toggle('lite', on);
   try { sessionStorage.setItem('agrocow-lite', on ? '1' : '0'); } catch { /* sin storage */ }
   if (why) $('#live').textContent = on ? 'Modo liviano activado' : 'Modo liviano desactivado';
-  scrub?.setEnabled(videoAllowed());
+  if (intent) scrub?.setEnabled(videoAllowed());
 }
 if (liteParam === '1') setLite(true);
 else if (liteParam === null) { try { if (sessionStorage.getItem('agrocow-lite') === '1') { setLite(true); liteDecided = true; } } catch { /* sin storage */ } }
@@ -333,6 +368,7 @@ function scrollToY(target, instant) {
     if (t < 1) rafAnim = requestAnimationFrame(step);
     else {
       animating = false;
+      onScroll();
       // Si más de la mitad de los cuadros (de al menos 10, acumulados) tardó más de 40 ms, pasa solo a modo liviano.
       if (!liteDecided && perf.n >= 10) { liteDecided = true; if (perf.slow / perf.n > 0.5) setLite(true, 'auto'); }
     }
@@ -343,12 +379,20 @@ function scrollToY(target, instant) {
 function goTo(i, { instant = false, announce = true, focus = true, fromBelow = false } = {}) {
   const idx = Math.max(0, Math.min(LAST, i));
   setActive(idx, { announce, fromBelow });
-  scrollToY(tops[idx], instant);
+  const target = idx === 0 && fromBelow ? tops[0] + CV_STEPS * cvStepPx() : tops[idx];
+  scrollToY(target, instant);
+  if (idx === 0) setCv(fromBelow ? CV_STEPS : 0);
   if (focus) { const h = $('h1, h2', sections[idx]); if (h) h.focus({ preventScroll: true }); }
 }
 
 // Avanzar/volver: dentro de la solución, primero se recorre el flujo paso a paso.
 function advance(dir) {
+  if (cur === 0) {
+    const k = cvStage + dir;
+    if (k >= 0 && k <= CV_STEPS) { setCv(k); scrollToY(tops[0] + k * cvStepPx()); return; }
+    if (dir > 0) { goTo(1); return; }
+    return;
+  }
   if (cur === 2) {
     const n = flow.step + dir;
     if (n >= 1 && n <= solution.steps.length) { stopAuto(); setStep(n); return; }
@@ -356,17 +400,17 @@ function advance(dir) {
   goTo(cur + dir, { fromBelow: dir < 0 });
 }
 
+
 ['wheel', 'touchstart', 'mousedown'].forEach((ev) =>
   window.addEventListener(ev, () => { cancelAnimationFrame(rafAnim); animating = false; }, { passive: true }));
 
 /* --------------------------------------------------------- scroll: progreso y diapositiva activa */
-let scrub = null;
 function frame() {
   rafScroll = 0;
   scrub?.read();
   const maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
   progress.style.transform = `scaleX(${Math.min(1, window.scrollY / maxScroll).toFixed(4)})`;
-  if (!animating) { const now = indexFromScroll(); if (now !== cur) setActive(now, { fromBelow: now < cur }); }
+  if (!animating) { const now = indexFromScroll(); if (now !== cur) setActive(now, { fromBelow: now < cur }); setCv(cur === 0 ? cvFromScroll() : 0); }
 }
 const onScroll = () => { markMoving(); if (!rafScroll) rafScroll = requestAnimationFrame(frame); };
 window.addEventListener('scroll', onScroll, { passive: true });
@@ -432,22 +476,34 @@ function videoAllowed() {
 
 /* ------------------------------------------------------------------ inicio */
 measure();
+const initial = chapters.findIndex((c) => `#${c.id}` === location.hash);
 scrub = mountScrub($('#stage'), {
   scenes: [
     { id: 'scene-a', clip: 'media/scene-a.mp4', clipM: 'media/scene-a-m.mp4', poster: 'media/scene-a-poster' },
     { id: 'scene-b', clip: 'media/scene-b.mp4', clipM: 'media/scene-b-m.mp4', poster: 'media/scene-b-poster' },
   ],
-  // Escena A: de la portada a "Prueba"; escena B: de "Prueba" al cierre.
-  bounds: () => [{ start: tops[0], end: tops[3] }, { start: tops[3], end: tops[LAST] }],
+  // Escena A: la secuencia de visión de la portada; escena B: de ahí hasta el cierre.
+  bounds: () => [{ start: tops[0], end: tops[0] + CV_STEPS * cvStepPx() }, { start: tops[0] + CV_STEPS * cvStepPx(), end: tops[LAST] }],
   tracksUrl: 'media/tracks.json',
+  // zona del comedero (fija en la imagen, como en el motor) sobre el heno del clip A
+  zones: { 'scene-a': [{ label: 'comedero', poly: [[0.42, 0.52], [0.98, 0.52], [0.98, 0.8], [0.42, 0.78]] }] },
   onActive: markMoving,
+  onFrame: ({ count, seen, frame: f, total }) => {
+    if (cur === 0 && cvStage > 0) cvMetrics.textContent = `vacas en cuadro ${count} · IDs vistos ${seen} · cuadro ${f}/${total}`;
+  },
 });
-// El video se pide recién cuando la página ya cargó: no compite con la primera pantalla.
+// El video se pide recién con la primera intención (scroll, tecla o toque): no compite con la
+// primera pantalla ni se descarga si nadie avanza. Hasta entonces, las cajas reales se mueven sobre el póster.
 const enableVideo = () => scrub.setEnabled(videoAllowed());
-const idle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 1200));
-if (document.readyState === 'complete') idle(enableVideo); else window.addEventListener('load', () => idle(enableVideo), { once: true });
-reduceQuery.addEventListener?.('change', enableVideo);
-const initial = chapters.findIndex((c) => `#${c.id}` === location.hash);
+const onIntent = () => {
+  if (intent) return;
+  intent = true;
+  ['scroll', 'keydown', 'pointerdown', 'touchstart', 'wheel'].forEach((ev) => window.removeEventListener(ev, onIntent));
+  enableVideo();
+};
+['scroll', 'keydown', 'pointerdown', 'touchstart', 'wheel'].forEach((ev) => window.addEventListener(ev, onIntent, { passive: true }));
+if (initial > 0) onIntent();
+reduceQuery.addEventListener?.('change', () => { if (intent) enableVideo(); });
 if (initial > 0) { setActive(initial, { hash: false }); window.scrollTo(0, tops[initial]); } else { setActive(0, { hash: false }); }
 frame();
 window.addEventListener('load', remeasure);
@@ -456,4 +512,4 @@ window.addEventListener('load', remeasure);
 setTimeout(() => $('#intro')?.remove(), 2300);
 
 // Para pruebas automáticas.
-window.__agrocow = { goTo, advance, get current() { return cur; }, get flowStep() { return flow.step; }, get scrub() { return scrub.state; } };
+window.__agrocow = { goTo, advance, get current() { return cur; }, get flowStep() { return flow.step; }, get cvStage() { return cvStage; }, get scrub() { return scrub.state; } };

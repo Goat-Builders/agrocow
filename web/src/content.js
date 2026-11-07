@@ -38,6 +38,19 @@ export const hero = {
 
 };
 
+// Secuencia de la portada: el pipeline de visión, etapa por etapa, sobre el video real.
+export const cv = {
+  kicker: 'Pipeline de visión · en vivo sobre video real',
+  steps: [
+    { t: 'Video', s: 'Cada cuadro de la cámara del corral.' },
+    { t: 'Detección', s: 'YOLO11n encuentra cada vaca y da su confianza.' },
+    { t: 'Seguimiento', s: 'ByteTrack le pone un ID y sigue su recorrido.' },
+    { t: 'Zonas', s: 'Suma el tiempo de cada vaca en el comedero. La zona es fija en la imagen: requiere cámara fija.' },
+    { t: 'Conducta', s: 'Mide la distancia a la vecina más cercana: más de 2,5 anchos cuenta para «aislada».' },
+  ],
+  cue: 'Bajá para ver cómo detecta',
+};
+
 export const problem = {
   title: 'Una vaca que está mal cambia su conducta antes de que se note.',
   tiles: [

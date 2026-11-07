@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AgroCow</title>
+  <meta name="description" content="AgroCow detecta y sigue bovinos en video de corral, mide su uso del comedero y marca desvíos de conducta para revisión veterinaria. Prototipo.">
+  <meta name="theme-color" content="#0F1A14">
+  <meta property="og:title" content="AgroCow">
+  <meta property="og:description" content="Saber a qué vaca mirar primero. Visión por computadora para ganado bovino. Prototipo.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+
+  <header class="top">
+    <a class="brand" href="#inicio" data-goto="0">AgroCow</a>
+    <nav class="top-nav" aria-label="Capítulos" id="topNav"></nav>
+    <div class="hud" id="hud">
+      <button type="button" class="icon-btn" id="btnPrev" aria-label="Capítulo anterior"><span aria-hidden="true">‹</span></button>
+      <div class="hud-count" aria-hidden="true"><span id="hudNum">00</span><span class="hud-sep"> / 06</span><span class="hud-label" id="hudLabel">Inicio</span></div>
+      <button type="button" class="icon-btn" id="btnNext" aria-label="Capítulo siguiente"><span aria-hidden="true">›</span></button>
+      <button type="button" class="icon-btn" id="btnFs" aria-label="Pantalla completa" aria-pressed="false"><span aria-hidden="true">⛶</span></button>
+    </div>
+    <div class="progress" aria-hidden="true"><div class="progress-bar" id="progress"></div></div>
+  </header>
+
+  <!-- Mundo: capas con parallax detrás del contenido. Decorativo. -->
+  <div class="stage" id="stage" aria-hidden="true">
+    <svg width="0" height="0" style="position:absolute">
+      <defs>
+        <symbol id="cow" viewBox="0 0 100 60">
+          <rect x="30" y="42" width="6" height="18" rx="2" fill="#B5AE99"/>
+          <rect x="40" y="42" width="6" height="18" rx="2" fill="#9D9681"/>
+          <rect x="62" y="42" width="6" height="18" rx="2" fill="#B5AE99"/>
+          <rect x="72" y="42" width="6" height="18" rx="2" fill="#9D9681"/>
+          <ellipse cx="52" cy="30" rx="35" ry="19" fill="#C9C2AE"/>
+          <ellipse cx="40" cy="26" rx="9" ry="6" fill="#1D3125" opacity=".55"/>
+          <ellipse cx="62" cy="34" rx="7" ry="5" fill="#1D3125" opacity=".55"/>
+          <ellipse cx="88" cy="25" rx="11" ry="9" fill="#B5AE99"/>
+          <ellipse cx="94" cy="28" rx="4" ry="3" fill="#1D3125"/>
+          <rect x="14" y="20" width="5" height="26" rx="2.5" fill="#B5AE99"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <svg class="layer l-far" viewBox="0 0 3200 400" preserveAspectRatio="xMinYMax slice">
+      <path d="M0 260 C 300 150 600 290 960 220 C 1300 150 1600 280 1950 210 C 2300 140 2700 270 3200 190 L3200 400 L0 400 Z" fill="#122017"/>
+    </svg>
+    <svg class="layer l-mid" viewBox="0 0 3200 400" preserveAspectRatio="xMinYMax slice">
+      <path d="M0 300 C 400 220 700 320 1100 270 C 1500 220 1800 330 2200 280 C 2600 230 2900 320 3200 260 L3200 400 L0 400 Z" fill="#16251C"/>
+      <g stroke="#2C4536" stroke-width="3" fill="none" opacity=".8">
+        <path d="M0 300 H3200 M0 330 H3200"/>
+        <path d="M80 280 V360 M480 280 V360 M880 280 V360 M1280 280 V360 M1680 280 V360 M2080 280 V360 M2480 280 V360 M2880 280 V360"/>
+      </g>
+    </svg>
+    <svg class="layer l-near" viewBox="0 0 3200 400" preserveAspectRatio="xMinYMax slice">
+      <rect x="0" y="372" width="3200" height="28" fill="#1D3125"/>
+
+      <!-- comedero -->
+      <rect x="650" y="324" width="480" height="28" rx="4" fill="#2C4536"/>
+      <rect class="zone" x="635" y="196" width="525" height="168" rx="6" fill="none" stroke="#E2A93B" stroke-width="3" stroke-dasharray="14 10"/>
+      <text class="lab" id="figNote" x="640" y="136" font-family="Space Grotesk, sans-serif" font-size="16" fill="#A9B5A8"></text>
+      <g class="lab"><rect x="650" y="166" width="200" height="30" fill="#15241B"/><text x="658" y="188" font-family="IBM Plex Mono, monospace" font-size="20" fill="#E2A93B">zona comedero</text></g>
+
+      <!-- vacas del encuadre inicial -->
+      <use href="#cow" x="700" y="266" width="160" height="96"/>
+      <use href="#cow" x="870" y="270" width="150" height="90"/>
+      <use href="#cow" x="1030" y="266" width="160" height="96"/>
+      <g class="det"><rect x="690" y="252" width="180" height="118" fill="none" stroke="#E2A93B" stroke-width="4"/><g class="lab"><rect x="690" y="222" width="100" height="30" fill="#E2A93B"/><text x="698" y="244" font-family="IBM Plex Mono, monospace" font-size="20" fill="#0F1A14">id 07</text></g></g>
+      <g class="det"><rect x="860" y="258" width="170" height="114" fill="none" stroke="#5FC3A5" stroke-width="4"/><g class="lab"><rect x="860" y="228" width="100" height="30" fill="#5FC3A5"/><text x="868" y="250" font-family="IBM Plex Mono, monospace" font-size="20" fill="#0F1A14">id 03</text></g></g>
+      <g class="det"><rect x="1020" y="252" width="180" height="118" fill="none" stroke="#E2A93B" stroke-width="4"/><g class="lab"><rect x="1020" y="222" width="100" height="30" fill="#E2A93B"/><text x="1028" y="244" font-family="IBM Plex Mono, monospace" font-size="20" fill="#0F1A14">id 11</text></g></g>
+
+      <!-- resto del corral -->
+      <use href="#cow" x="1560" y="266" width="170" height="102"/>
+      <use href="#cow" x="1790" y="262" width="180" height="108"/>
+      <use href="#cow" x="2240" y="268" width="170" height="102"/>
+      <use href="#cow" x="2700" y="262" width="180" height="108"/>
+      <g class="det"><rect x="1548" y="254" width="194" height="120" fill="none" stroke="#5FC3A5" stroke-width="4"/></g>
+      <g class="det"><rect x="2228" y="256" width="194" height="120" fill="none" stroke="#E2A93B" stroke-width="4"/></g>
+      <g class="det"><rect x="2688" y="248" width="204" height="128" fill="none" stroke="#5FC3A5" stroke-width="4"/></g>
+    </svg>
+  </div>
+
+  <main id="contenido"></main>
+
+  <p class="sr-only" id="live" aria-live="polite"></p>
+  <noscript><p class="noscript">AgroCow necesita JavaScript para mostrar esta presentación. El resumen del proyecto está en el README del repositorio.</p></noscript>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// ÚNICA fuente de textos de la web. Todo sale del README.md del repo (commit fa5060f).
+// ÚNICA fuente de textos de la web. Todo sale del README.md del repo (commit a6d9448).
 // Si el README cambia, se actualiza acá. No agregar cifras ni capacidades que el README no declare.
 //
 // Propuesta de valor (framework de persuasión del vault, con la regla anti-tryhard):
@@ -206,6 +206,7 @@ export const status = {
         'Tres eventos con reglas fijas',
         'Salida JSON y video anotado',
         'CLI y clase de Python',
+        'API y dashboard (MVP)',
       ],
     },
     { key: 'dev', label: 'En desarrollo', note: '', items: ['A confirmar con el equipo'] },

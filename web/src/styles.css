@@ -362,9 +362,10 @@ td.num { white-space: nowrap; }
 .status-col li:first-child { border-top: 0; padding-top: 0; }
 .closing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3) var(--s6); padding: var(--s4) var(--s5); border-radius: var(--r-m); }
 .closing > div { flex: 1 1 24rem; }
+@media (min-width: 900px) { .closing { flex-wrap: nowrap; } .closing > div { flex: 1 1 auto; min-width: 0; } }
 .closing .btn { flex: none; }
 .closing h3 { font-size: clamp(22px, 2vw, 38px); letter-spacing: -0.015em; }
-.closing p { color: var(--muted); max-width: 40rem; margin-top: var(--s1); }
+.closing p { color: var(--muted); max-width: 48rem; margin-top: var(--s1); }
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0 var(--s6); font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: var(--muted); }
 .foot a { min-height: 44px; display: inline-flex; align-items: center; color: var(--muted); }
 .foot a:hover { color: var(--text); }

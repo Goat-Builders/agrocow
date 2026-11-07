@@ -4,15 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>AgroCow</title>
-  <meta name="description" content="AgroCow detecta cambios de conducta en el ganado con visión artificial y los convierte en alertas verificables. Prototipo con token y pago en testnet.">
+  <meta name="description" content="AgroCow: cámaras y visión artificial que le dicen al recorredor de feedlot a qué animal revisar primero, sin tocar al animal.">
   <meta name="theme-color" content="#0F1A14">
   <meta property="og:title" content="AgroCow">
-  <meta property="og:description" content="Saber a qué vaca mirar primero. Visión artificial para ganado bovino. Prototipo.">
+  <meta property="og:description" content="Cuatro segundos por vaca. AgroCow le da al recorredor cuatro días de ventaja.">
   <meta property="og:type" content="website">
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="brand/favicon-64.png">
+  <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
   <!-- El póster del fondo es lo más grande de la primera pantalla: se pide de entrada. -->
   <link rel="preload" as="image" type="image/avif" fetchpriority="high"
-        imagesrcset="media/scene-a-poster-640.avif 640w, media/scene-a-poster-960.avif 960w"
+        imagesrcset="media/scene-b-poster-640.avif 640w, media/scene-b-poster-960.avif 960w"
         imagesizes="100vw">
   <!-- La intro de marca corre una vez por sesión y no se repite al recargar en medio de una presentación. -->
   <script>try{var h=location.hash;if(location.search.indexOf('nointro')>-1||sessionStorage.getItem('agrocow-intro')||(h&&h!=='#inicio')){document.documentElement.classList.add('no-intro')}else{sessionStorage.setItem('agrocow-intro','1')}}catch(e){}</script>
@@ -20,45 +22,30 @@
 <body>
   <a class="skip" href="#contenido">Saltar al contenido</a>
 
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-    <defs>
-      <!-- Marca: encuadre de detección con una vaca adentro -->
-      <symbol id="logo" viewBox="0 0 64 64">
-        <path d="M8 22V12a4 4 0 0 1 4-4h10M42 8h10a4 4 0 0 1 4 4v10M56 42v10a4 4 0 0 1-4 4H42M22 56H12a4 4 0 0 1-4-4V42" fill="none" stroke="#E2A93B" stroke-width="5" stroke-linecap="round"/>
-        <ellipse cx="30" cy="34" rx="13" ry="8.5" fill="#EDE8DA"/>
-        <circle cx="45" cy="30" r="5.2" fill="#EDE8DA"/>
-        <rect x="21" y="40" width="3.4" height="8" rx="1.6" fill="#EDE8DA"/>
-        <rect x="34" y="40" width="3.4" height="8" rx="1.6" fill="#EDE8DA"/>
-      </symbol>
-    </defs>
-  </svg>
-
   <!-- Intro de marca: corta, no bloquea (ni clics ni teclado) y se salta con movimiento reducido -->
   <div class="intro" id="intro" aria-hidden="true">
     <div class="intro-box">
-      <svg class="intro-logo" viewBox="0 0 64 64"><use href="#logo"/></svg>
-      <span class="intro-word">AgroCow</span>
-      <span class="intro-tag">id 01 · bovino</span>
+      <img class="intro-logo" src="brand/agrocow-logo-480.webp" alt="" width="480" height="86" decoding="async">
     </div>
   </div>
 
   <header class="top glass">
-    <a class="brand" href="#inicio" data-goto="0" aria-label="AgroCow, ir al inicio">
-      <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#logo"/></svg>
-      <span>AgroCow</span>
+    <a class="brand" href="#inicio" data-goto="0">
+      <picture>
+        <source media="(max-width: 520px)" srcset="brand/favicon-64.png">
+        <source type="image/webp" srcset="brand/agrocow-logo-240.webp 240w, brand/agrocow-logo-480.webp 480w" sizes="10.5rem">
+        <img class="brand-logo" src="brand/agrocow-logo-240.png" alt="AgroCow, ir al inicio" width="240" height="43" decoding="async">
+      </picture>
     </a>
-    <nav class="top-nav" aria-label="Diapositivas" id="topNav"></nav>
+    <!-- Teclado: → / Espacio avanzan, ← vuelve, 1–7 salta, F pantalla completa (ver web/README.md) -->
     <div class="hud" id="hud">
+      <span class="hud-label" id="hudLabel" aria-hidden="true">Inicio</span>
       <button type="button" class="icon-btn" id="btnPrev" aria-label="Anterior"><span aria-hidden="true">‹</span></button>
-      <div class="hud-count" aria-hidden="true"><span id="hudNum">00</span><span class="hud-sep">/ 06</span><span class="hud-label" id="hudLabel">Inicio</span></div>
+      <div class="hud-count" aria-hidden="true"><span id="hudNum">00</span><span class="hud-sep">/ 07</span></div>
       <button type="button" class="icon-btn" id="btnNext" aria-label="Siguiente"><span aria-hidden="true">›</span></button>
-      <button type="button" class="icon-btn" id="btnFs" aria-label="Pantalla completa" aria-pressed="false"><span aria-hidden="true">⛶</span></button>
     </div>
     <div class="progress" aria-hidden="true"><div class="progress-bar" id="progress"></div></div>
   </header>
-
-  <!-- Atajo con el mouse: no se enfoca con Tab (ya están el menú de arriba y el teclado) -->
-  <nav class="dock glass" id="dock" aria-hidden="true"></nav>
 
   <!-- Fondo: video real de vacas que avanza cuadro a cuadro con el scroll (técnica de scroll-world). Decorativo. -->
   <div class="stage" id="stage" aria-hidden="true"></div>

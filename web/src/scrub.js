@@ -56,7 +56,7 @@ export function mountScrub(stage, { scenes, bounds, tracksUrl, zones = {}, posX 
         <source type="image/avif" srcset="${sc.poster}-640.avif 640w, ${sc.poster}-960.avif 960w" sizes="100vw">
         <img src="${sc.poster}-960.webp" srcset="${sc.poster}-640.webp 640w, ${sc.poster}-960.webp 960w" sizes="100vw" alt="" width="960" height="540" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
       </picture>
-      <svg class="sc-svg" aria-hidden="true"><g class="sc-zone"></g><g class="sc-trails"></g></svg>
+      <svg class="sc-svg" aria-hidden="true"><g class="sc-zone"></g><g class="sc-trails"></g><g class="sc-gaps"><line class="sc-gap"></line><text class="sc-gap-t" text-anchor="middle"></text></g></svg>
       <div class="sc-boxes"></div>`;
     stage.appendChild(el);
     const boxes = el.querySelector('.sc-boxes');
@@ -71,8 +71,15 @@ export function mountScrub(stage, { scenes, bounds, tracksUrl, zones = {}, posX 
       svg.querySelector('.sc-trails').appendChild(line);
       return { el: b, label: b.firstChild, line, id: null, text: '' };
     });
-    if (i > 0) el.style.visibility = 'hidden';
-    return { ...sc, el, boxes, svg, pool, video: null, ready: false, loading: false, lastSeek: null, cur: 0, target: 0, op: i === 0 ? 1 : 0, lastFrame: -1 };
+    let call = null;
+    if (!sc.base) {
+      boxes.insertAdjacentHTML('beforeend', '<div class="sc-call"></div>');
+      call = boxes.lastElementChild;
+      el.style.visibility = 'hidden';
+    }
+    const gap = svg.querySelector('.sc-gap');
+    const gapT = svg.querySelector('.sc-gap-t');
+    return { ...sc, el, boxes, svg, pool, call, callKey: '', gap, gapT, video: null, ready: false, loading: false, lastSeek: null, cur: 0, target: 0, op: sc.base ? 1 : 0, lastFrame: -1 };
   });
 
   let size = { w: window.innerWidth, h: window.innerHeight };
@@ -109,6 +116,57 @@ export function mountScrub(stage, { scenes, bounds, tracksUrl, zones = {}, posX 
     g.innerHTML = `<polygon points="${pts}"/><text text-anchor="end" x="${(r.x + lx * r.w - 8).toFixed(1)}" y="${(r.y + ly * r.h - 10).toFixed(1)}">zona ${tr.zone.label} · fija en la imagen</text>`;
   }
 
+  // Animal con id 01: tarjeta de señales (etapa 2) y distancia al grupo con su alerta (etapa 5).
+  // Todo sale de las cajas reales del clip; la regla es la del motor (isolation_mult 2,5 por 10 s).
+  function drawFocus(s, tr, f, row, r, stg, near, nnIdx) {
+    const k = row.findIndex((b) => b[0] === 1);
+    if (s.base || (stg !== 2 && stg !== 5) || k < 0) return;
+    const [, x, y, w, h, conf] = row[k];
+    const nn = near ? near[k] : null;
+    const sep = nn !== null && nn > ISOLATION_MULT;
+    const f0 = Math.max(0, f - 6);
+    const prev = tr.frames[f0].find((b) => b[0] === 1);
+    const speed = prev && f > f0
+      ? Math.hypot((x + w / 2 - prev[1] - prev[3] / 2) * tr.w, (y + h - prev[2] - prev[4]) * tr.h) / (w * tr.w) / ((f - f0) / tr.fps)
+      : null;
+    const inZone = tr.zone ? inPoly(x + w / 2, y + h, tr.zone.poly) : null;
+    let head; const lines = [];
+    if (stg === 2) {
+      head = 'id 01 · detectada';
+      lines.push([`vaca · confianza ${fmt(conf ?? 0, 2)}`, false]);
+      if (speed !== null) lines.push([`se mueve ${fmt(speed)} anchos/s`, false]);
+      if (inZone === false) lines.push(['fuera del comedero', true]);
+      else if (inZone) lines.push([`comedero ${fmt(tr.dwell[f].get(1) || 0)} s`, false]);
+      if (nn !== null) lines.push([`a ${fmt(nn)}× de las otras`, sep]);
+    } else {
+      head = sep ? 'señal de alerta · aislada' : 'se aleja del grupo';
+      if (nn !== null) lines.push([`a ${fmt(nn)} anchos de la vecina`, sep]);
+      lines.push(['regla: > 2,5 anchos, 10 s', false]);
+    }
+    const key = head + lines.map((l) => l.join('')).join('|');
+    if (key !== s.callKey) {
+      s.callKey = key;
+      s.call.innerHTML = `<b>${head}</b><ul>${lines.map(([t, warn]) => `<li${warn ? ' class="warn"' : ''}>${t}</li>`).join('')}</ul>`;
+    }
+    const bx = r.x + x * r.w; const by = r.y + y * r.h; const bw = w * r.w; const bh = h * r.h;
+    const cw = s.call.offsetWidth || 250;
+    let left = bx + bw + 12; let top = by;
+    if (isMobile()) { left = bx; top = by + bh + 10; }
+    else if (left + cw > size.w - 8) left = bx - cw - 12;
+    left = Math.min(Math.max(8, left), Math.max(8, size.w - cw - 8));
+    s.call.style.cssText = `left:${left.toFixed(1)}px;top:${top.toFixed(1)}px`;
+    s.call.classList.toggle('warn', sep);
+    if (stg === 5 && nnIdx && nn !== null) {
+      const o = row[nnIdx[k]];
+      const x1 = r.x + (x + w / 2) * r.w; const y1 = r.y + (y + h) * r.h;
+      const x2 = r.x + (o[1] + o[3] / 2) * r.w; const y2 = r.y + (o[2] + o[4]) * r.h;
+      s.gap.setAttribute('x1', x1.toFixed(1)); s.gap.setAttribute('y1', y1.toFixed(1));
+      s.gap.setAttribute('x2', x2.toFixed(1)); s.gap.setAttribute('y2', y2.toFixed(1));
+      s.gapT.setAttribute('x', Math.min(size.w - 24, (x1 + x2) / 2).toFixed(1)); s.gapT.setAttribute('y', (((y1 + y2) / 2) - 12).toFixed(1));
+      s.gapT.textContent = `${fmt(nn)}×`;
+    }
+  }
+
   function drawBoxes(s, timeSec) {
     if (!tracks || !tracks[s.id]) return;
     const tr = tracks[s.id];
@@ -118,13 +176,16 @@ export function mountScrub(stage, { scenes, bounds, tracksUrl, zones = {}, posX 
     const r = rect(tr.w, tr.h);
     const row = tr.frames[f];
     // conducta: distancia de cada vaca a su vecina más cercana, en anchos medios de caja (regla del motor)
-    let near = null;
-    if (cv === 5 && row.length >= ISOLATION_MIN) {
+    const stg = s.base ? 0 : cv; // la escena base (fondo de toda la página) no muestra etapas
+    let near = null; let nnIdx = null;
+    if ((stg === 5 || stg === 2) && row.length >= ISOLATION_MIN) {
       const wbar = row.reduce((a, b) => a + b[3], 0) / row.length;
+      nnIdx = [];
       near = row.map(([, x, y, w, h]) => {
         const px = x + w / 2; const py = y + h;
-        let best = Infinity;
-        row.forEach(([, x2, y2, w2, h2]) => { const d = Math.hypot(px - (x2 + w2 / 2), (py - (y2 + h2)) * (tr.h / tr.w)); if (d > 1e-6 && d < best) best = d; });
+        let best = Infinity; let bi = -1;
+        row.forEach(([, x2, y2, w2, h2], j) => { const d = Math.hypot(px - (x2 + w2 / 2), (py - (y2 + h2)) * (tr.h / tr.w)); if (d > 1e-6 && d < best) { best = d; bi = j; } });
+        nnIdx.push(bi);
         return best / wbar;
       });
     }
@@ -139,16 +200,19 @@ export function mountScrub(stage, { scenes, bounds, tracksUrl, zones = {}, posX 
       const tag = `id ${String(id).padStart(2, '0')}`;
       let text = tag;
       let far = false;
-      if (cv === 2) text = `vaca ${fmt(conf ?? 0, 2)}`;
-      else if (cv === 4) { const sec = tr.dwell[f].get(id); text = sec ? `${tag} · comedero ${fmt(sec)} s` : tag; }
-      else if (cv === 5) {
+      if (stg === 2) text = `vaca ${fmt(conf ?? 0, 2)}`;
+      else if (stg === 4) { const sec = tr.dwell[f].get(id); text = sec ? `${tag} · comedero ${fmt(sec)} s` : tag; }
+      else if (stg === 5) {
         if (near) { far = near[k] > ISOLATION_MULT; text = `${tag} · vecino ${fmt(near[k])}×`; } else text = `${tag} · menos de 3 vacas`;
       }
       if (text !== p.text) { p.text = text; p.label.textContent = text; }
       if (p.id !== id) { p.id = id; p.el.classList.toggle('trk--mint', id % 2 === 0); }
       p.el.classList.toggle('trk--far', far);
+      // El animal con id 01 va en otro color: se entiende que el modelo sigue a uno en particular.
+      p.el.classList.toggle('trk--focus', id === 1);
+      p.line.classList.toggle('trail--focus', id === 1);
       // estela: el punto de apoyo (pies) de este ID en los últimos cuadros
-      if (cv >= 3) {
+      if (stg >= 3) {
         const pts = [];
         for (let q = Math.max(0, f - TRAIL); q <= f; q += 2) {
           const hit = tr.frames[q].find((bb) => bb[0] === id);
@@ -158,7 +222,8 @@ export function mountScrub(stage, { scenes, bounds, tracksUrl, zones = {}, posX 
         p.line.classList.toggle('trail--mint', id % 2 === 0);
       }
     });
-    if (s.op > 0.5) onFrame({ scene: s.id, frame: f + 1, total: tr.frames.length, count: row.length, seen: tr.seen[f] });
+    drawFocus(s, tr, f, row, r, stg, near, nnIdx);
+    if (s.op > 0.5 && !s.base) onFrame({ scene: s.id, frame: f + 1, total: tr.frames.length, count: row.length, seen: tr.seen[f] });
   }
 
   // ---- scroll → objetivo y opacidad de cada escena ----
@@ -170,13 +235,18 @@ export function mountScrub(stage, { scenes, bounds, tracksUrl, zones = {}, posX 
     S.forEach((s, i) => {
       const { start, end } = b[i];
       s.target = clamp((y - start) / Math.max(1, end - start));
+      // frameMap: cada etapa de la demo cae en los cuadros del clip donde se ve lo que explica
+      const trk = tracks && tracks[s.id];
+      if (s.frameMap && trk) {
+        const prev = s.target;
+        s.target = clamp(s.frameMap(s.target) / trk.frames.length);
+        if (Math.abs(s.target - prev) > 0.2) s.cur = s.target; // corte entre etapas: salta, no rebobina
+      }
       let outside = 0;
       if (y < start) outside = start - y; else if (y > end) outside = y - end;
-      if (i === 0 && y < start) outside = 0;
-      if (i === S.length - 1 && y > end) outside = 0;
-      const op = smooth(1 - outside / fade);
+      const op = s.base ? 1 : smooth(1 - outside / fade);
       if (Math.abs(op - s.op) > 0.001) { s.op = op; s.el.style.opacity = op.toFixed(3); s.el.style.visibility = op < 0.001 ? 'hidden' : 'visible'; }
-      s.el.style.zIndex = op > 0.5 ? '2' : '1';
+      s.el.style.zIndex = s.base ? '1' : '2';
       if (enabled && !s.video && !s.loading && op > 0 && Math.abs(y - start) < 1.6 * vh + (end - start)) load(s);
     });
     wake();
@@ -252,7 +322,7 @@ export function mountScrub(stage, { scenes, bounds, tracksUrl, zones = {}, posX 
       if (!j) return;
       tracks = j;
       Object.entries(tracks).forEach(([id, tr]) => prepare(id, tr));
-      relayout(); last = 0; wake();
+      relayout(); last = 0; read();
     }).catch(() => {});
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });

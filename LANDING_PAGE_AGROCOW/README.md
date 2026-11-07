@@ -19,7 +19,7 @@ npm run preview   # sirve dist/
 | 1 · Problema | 1 Cuatro segundos por vaca · 2 pregunta «¿Cuántos enfermos se les escaparían?» · 3 «3 DE CADA 4» · 4 «1 VACA muere cada 10 minutos» · 5 «80.000 USD de pérdidas anuales» (feedlot de 1.000 cabezas) · 6 «100 A 150 terneros se podrían comprar con esas pérdidas» | 0:00–0:30 |
 | 2 · Por qué ahora y nosotros | 7 El recorredor trabaja todo el día, es propenso a errores (ilustración) · 8 Somos AgroCow | 0:30–0:50 |
 | 3 · Solución | 9 «ASÍ FUNCIONA AGROCOW» → **video del MVP (30 s), la página no se ve** → 10 tres pasos (cámaras · detecta el cambio · alerta al celular) · 11 Va directo a quien lo necesita (1.000 puntos, uno resaltado) | 0:50–1:30 |
-| 4 · Mercado y negocio | 12 «+4 MILLONES» · 13 «1.000 MILLONES» sobre el mapa · 14 pregunta «¿Cómo entramos al mercado?» · 15 Cobramos un abono por cabeza (más ganado, más ganamos) · 16 piloto → todo el feedlot → feedlots más grandes → otros países | 1:30–2:05 |
+| 4 · Mercado y negocio | 12 «+4 MILLONES» · 13 «1.000 MILLONES» sobre el mapa · 14 Cobramos un abono por cabeza (más ganado, más ganamos) · 15 pregunta «¿Cómo entramos al mercado?» · 16 piloto → todo el feedlot → feedlots más grandes → otros países | 1:30–2:05 |
 | 5 · Cierre | 17 «TRATARLO O ~ENTERRARLO~» (en rojo sangre) · «Con AgroCow, lo ve a tiempo» | 2:05–2:20 |
 
 Reglas del brief que la web cumple (y `pitch-test` verifica): máximo 15 palabras por pantalla, títulos ≥ 48 px en pantalla proyectada, preguntas retóricas solas y centradas, transiciones de 0,4 s, solo verde oscuro + lima + blanco, sin logos de terceros ni fotos de personas.

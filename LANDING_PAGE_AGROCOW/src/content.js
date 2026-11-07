@@ -42,8 +42,8 @@ export const screens = [
   // 4 · Mercado y modelo de negocio (1:30–2:05)
   { block: 3, kind: 'fig', fig: '+4 MILLONES', cap: 'DE CABEZAS POR AÑO PASAN POR FEEDLOTS EN ARGENTINA' },
   { block: 3, kind: 'map', fig: '1.000 MILLONES', cap: 'DE USD DE PÉRDIDAS POR AÑO' },
-  { block: 3, kind: 'q', q: '¿Cómo entramos al mercado?' },
   { block: 3, kind: 'fee', title: 'Cobramos un *abono* por cabeza', sub: 'Mientras más crezca el ganado, más ganamos' },
+  { block: 3, kind: 'q', q: '¿Cómo entramos al mercado?' },
   {
     block: 3, kind: 'timeline', title: 'Cómo crecemos',
     steps: ['Piloto', 'Todo el feedlot', 'Feedlots más grandes', 'Otros países'],

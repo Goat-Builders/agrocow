@@ -13,7 +13,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reduced = () => reduceQuery.matches;
 const LAST = screens.length - 1;
-const kw = (s) => s.replace(/\*(.+?)\*/g, '<em class="k">$1</em>'); // *palabra* → lima
+const kw = (s) => s.replace(/\*(.+?)\*/g, '<em class="k">$1</em>').replace(/~(.+?)~/g, '<em class="r">$1</em>'); // *lima* · ~rojo sangre~
 
 const svg = (vb, body, cls = '') => `<svg class="${cls}" viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
 const ICONS = {
@@ -31,9 +31,6 @@ const RIDER = `<svg class="art art--rider" viewBox="0 0 240 190" aria-hidden="tr
   <circle cx="122" cy="28" r="10"/>
   <path d="M104 21H142M112 20L114 8H132L134 20" class="hat"/>
   <path d="M124 48L148 62L158 76" class="arm"/></svg>`;
-const NOSENSOR = svg('0 0 200 160', `
-  <circle cx="100" cy="84" r="22"/><path d="M62 52a54 54 0 0 1 76 0M40 30a86 86 0 0 1 120 0"/>
-  <path d="M30 140 170 20" class="strike"/>`, 'art art--nosensor');
 
 function dotsSvg() {
   const cols = 40; const rows = 25; const hit = 9 * cols + 27;
@@ -74,7 +71,6 @@ const RENDER = {
     <p class="cap" data-reveal>${s.cap}</p>
     ${sub(s.sub)}`,
   rider: (s, i) => `<div class="copy">${title(i, s.title)}${sub(s.sub)}</div>${RIDER}`,
-  nosensor: (s, i) => `<div class="copy">${title(i, s.title)}${sub(s.sub)}</div>${NOSENSOR}`,
   team: (s, i) => `${LOGO}<h2 id="${hid(i)}" tabindex="-1" class="title" data-reveal>${s.title}</h2>`,
   flow: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="flow" data-reveal>${s.title}</h2>`,
   steps: (s, i) => `
@@ -94,8 +90,7 @@ const RENDER = {
       ${s.steps.map((t, n) => `<li class="tl-step"><span class="tl-dot">${n + 1}</span><strong>${t}</strong></li>`).join('')}
     </ol>`,
   fee: (s, i) => `${title(i, s.title, 'title--xl')}${sub(s.sub)}`,
-  closing: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="big" data-reveal>${s.title}</h2>${sub(s.sub)}`,
-  end: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="sr-only">${s.title}</h2>${LOGO}`,
+  closing: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="big" data-reveal>${kw(s.title)}</h2>${sub(s.sub)}`,
 };
 
 $('#contenido').innerHTML = screens.map((s, i) => `
@@ -206,7 +201,7 @@ document.addEventListener('keydown', (e) => {
   if (key === 'ArrowLeft' || key === 'ArrowUp' || key === 'PageUp') return run(() => advance(-1));
   if (key === 'Home') return run(() => goTo(0));
   if (key === 'End') return run(() => goTo(LAST));
-  if (/^[1-6]$/.test(key) && !e.shiftKey) return run(() => goTo(blockStart[Number(key) - 1]));
+  if (/^[1-5]$/.test(key) && !e.shiftKey) return run(() => goTo(blockStart[Number(key) - 1]));
   if (key === 'f' || key === 'F') return run(toggleFullscreen);
   return undefined;
 });

@@ -16,12 +16,11 @@ npm run preview   # sirve dist/
 
 | Bloque | Pantallas | Hora aprox. |
 |---|---|---|
-| 1 · Problema | 1 Cuatro segundos por vaca (foto del corral) · 2 pregunta «¿Cuántos enfermos se les escaparían?» · 3 «3 DE CADA 4» · 4 «1 CADA 10 MIN» · 5 «80.000 USD» | 0:00–0:30 |
-| 2 · Por qué ahora y nosotros | 6 El recorredor trabaja todo el día (ilustración) · 7 No tocamos al animal · 8 Somos AgroCow | 0:30–0:50 |
+| 1 · Problema | 1 Cuatro segundos por vaca · 2 pregunta «¿Cuántos enfermos se les escaparían?» · 3 «3 DE CADA 4» · 4 «1 VACA muere cada 10 minutos» · 5 «80.000 USD de pérdidas anuales» (feedlot de 1.000 cabezas) · 6 «100 A 150 terneros se podrían comprar con esas pérdidas» | 0:00–0:30 |
+| 2 · Por qué ahora y nosotros | 7 El recorredor trabaja todo el día, es propenso a errores (ilustración) · 8 Somos AgroCow | 0:30–0:50 |
 | 3 · Solución | 9 «ASÍ FUNCIONA AGROCOW» → **video del MVP (30 s), la página no se ve** → 10 tres pasos (cámaras · detecta el cambio · alerta al celular) · 11 Va directo a quien lo necesita (1.000 puntos, uno resaltado) | 0:50–1:30 |
-| 4 · Mercado | 12 «+4 MILLONES» · 13 «1.000 MILLONES» sobre el mapa · 14 pregunta «¿Cómo entramos al mercado?» · 15 «60 %» · 16 piloto → todo el feedlot → feedlots más grandes → otros países | 1:30–1:45 |
-| 5 · Modelo de negocio | 17 Cobramos un abono por cabeza | 1:45–2:05 |
-| 6 · Cierre | 18 «TRATARLO O ENTERRARLO» · «Con AgroCow, lo ve a tiempo» · 19 solo el logo | 2:05–2:20 |
+| 4 · Mercado y negocio | 12 «+4 MILLONES» · 13 «1.000 MILLONES» sobre el mapa · 14 pregunta «¿Cómo entramos al mercado?» · 15 Cobramos un abono por cabeza (más ganado, más ganamos) · 16 piloto → todo el feedlot → feedlots más grandes → otros países | 1:30–2:05 |
+| 5 · Cierre | 17 «TRATARLO O ~ENTERRARLO~» (en rojo sangre) · «Con AgroCow, lo ve a tiempo» | 2:05–2:20 |
 
 Reglas del brief que la web cumple (y `pitch-test` verifica): máximo 15 palabras por pantalla, títulos ≥ 48 px en pantalla proyectada, preguntas retóricas solas y centradas, transiciones de 0,4 s, solo verde oscuro + lima + blanco, sin logos de terceros ni fotos de personas.
 
@@ -31,7 +30,7 @@ Reglas del brief que la web cumple (y `pitch-test` verifica): máximo 15 palabra
 |---|---|
 | `→`, `↓`, `Espacio`, `PageDown` | Pantalla siguiente |
 | `←`, `↑`, `PageUp`, `Shift+Espacio` | Pantalla anterior |
-| `1`–`6` | Ir al bloque del guion |
+| `1`–`5` | Ir al bloque del guion |
 | `Home` / `End` | Primera / última |
 | `F` | Pantalla completa |
 
@@ -39,7 +38,7 @@ Con `prefers-reduced-motion` los saltos son instantáneos.
 
 ## Fuentes de las cifras
 
-Las pantallas llevan solo las cifras del guion; de dónde sale cada una y su estado está en [`public/fuentes.html`](public/fuentes.html) (`/fuentes.html`, no se proyecta). Pendientes de verificar: Micheloud 2026 y Laguzzi 2015 (mortalidad), el 60 % de muertes en corrales de ingreso (sin fuente), y la cifra de terneros (el guion dice 100 a 150; las notas daban 50 a 150).
+Las pantallas llevan solo las cifras del guion; de dónde sale cada una y su estado está en [`public/fuentes.html`](public/fuentes.html) (`/fuentes.html`, no se proyecta). Pendientes de verificar: Micheloud 2026 y Laguzzi 2015 (mortalidad) y la cifra de terneros (el guion dice 100 a 150; las notas daban 50 a 150).
 
 ## Lo que el código hace hoy vs. lo que dice el guion
 

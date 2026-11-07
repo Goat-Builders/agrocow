@@ -7,6 +7,7 @@
   --bg: #0B130E;
   --lime: #BEFB03;
   --white: #FFFFFF;
+  --blood: #F2222C;        /* rojo sangre: solo para «ENTERRARLO» */
   --line: rgb(255 255 255 / 0.22);
   --gutter: clamp(20px, 6vw, 140px);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -21,6 +22,7 @@ h1, h2, p, ol, ul, figure { margin: 0; }
 ol, ul { padding: 0; list-style: none; }
 img, picture, svg { display: block; max-width: 100%; }
 em.k { font-style: normal; color: var(--lime); }
+em.r { font-style: normal; color: var(--blood); }
 a { color: var(--white); }
 :focus-visible { outline: 4px solid var(--lime); outline-offset: 4px; border-radius: 4px; }
 h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
@@ -101,9 +103,7 @@ main { position: relative; z-index: 1; }
 .art--rider { width: min(88vw, 62vh * 1.26, 60rem); height: auto; fill: var(--lime); stroke: none; }
 .art--rider .hat { fill: var(--lime); stroke: var(--lime); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
 .art--rider .arm { fill: none; stroke: var(--lime); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
-.art--nosensor { width: min(60vw, 40vh * 1.25, 34rem); height: auto; stroke: var(--white); stroke-width: 3.2; }
-.art--nosensor .strike { stroke: var(--lime); stroke-width: 7; }
-.k-rider, .k-nosensor, .k-map { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: start; }
+.k-rider, .k-map { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: start; }
 @media (min-width: 900px) {
   .k-rider, .k-nosensor, .k-map { grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr); align-items: center; column-gap: clamp(24px, 4vw, 100px); }
   .art--rider, .art--nosensor { justify-self: end; }

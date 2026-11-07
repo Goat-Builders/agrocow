@@ -1,0 +1,3 @@
+# Solo para AGROCOW_CHAIN_MODE=web3 (testnet). El modo mock no necesita nada extra.
+# Probado con web3 8.0.0 en Python 3.14 contra una red local de Hardhat.
+web3>=7,<9

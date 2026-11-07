@@ -10,7 +10,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from .. import settings
-from . import engine_adapter, repository
+from . import chain_hooks, engine_adapter, repository
 
 log = logging.getLogger("agrotrack.processing")
 _executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agrotrack-worker")
@@ -29,6 +29,7 @@ def _run(video_id: int) -> None:
         repository.mark_processing(video_id)
         result = engine_adapter.run_engine(video["stored_path"], output_path)
         repository.save_result(video_id, output_path, result)
+        chain_hooks.after_result(video_id, result)  # opcional; nunca rompe el procesamiento
         log.info("Video %s procesado", video_id)
     except Exception as exc:  # el estado 'failed' guarda el motivo para mostrarlo
         log.exception("Falló el procesamiento del video %s", video_id)

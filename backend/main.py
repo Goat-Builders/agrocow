@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .database import init_db
-from .routes import analytics, dashboard, videos
+from .routes import analytics, chain, dashboard, videos
 from .services import repository
 
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +28,7 @@ app = FastAPI(title="AGROTRACK AI", description="Livestock Operations Intelligen
 app.include_router(videos.router)
 app.include_router(dashboard.router)
 app.include_router(analytics.router)
+app.include_router(chain.router)  # blockchain (prototipo, testnet); apagado por defecto
 
 
 @app.get("/api/health", tags=["health"])

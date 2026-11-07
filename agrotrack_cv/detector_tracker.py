@@ -57,6 +57,7 @@ class DetectorTracker:
         ids = boxes.id.cpu().numpy().astype(int)
 
         alpha = self.config.ema_alpha
+        min_width = self.config.min_box_width_ratio * frame.shape[1]
         detections: List[Detection] = []
         seen = set()
         for box, conf, tid in zip(xyxy, confs, ids):
@@ -66,6 +67,8 @@ class DetectorTracker:
             seen.add(tid)
             x1, y1, x2, y2 = (float(v) for v in box)
             width = x2 - x1
+            if width < min_width:
+                continue
             base = np.array([(x1 + x2) / 2.0, y2], dtype=np.float64)
 
             prev = self._smooth.get(tid)

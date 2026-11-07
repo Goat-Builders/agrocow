@@ -35,6 +35,9 @@ class AgroTrackConfig:
     # --- Modelo / detección ---
     model_name: str = "yolo11n.pt"
     conf_threshold: float = 0.30
+    # Ancho mínimo de caja como fracción del ancho del frame; descarta animales
+    # muy lejanos cuyo tracking es inestable. 0.0 desactiva el filtro.
+    min_box_width_ratio: float = 0.04
 
     # --- Suavizado y ruido ---
     ema_alpha: float = 0.30

@@ -25,10 +25,10 @@ export const screens = [
 
   // 2 · Por qué ahora y por qué nosotros (0:30–0:50)
   { block: 1, kind: 'rider', title: 'El recorredor trabaja todo el *día*', sub: 'Es propenso a errores' },
-  { block: 1, kind: 'team', title: 'Somos AgroCow' },
+  { block: 1, kind: 'team', title: 'Somos' }, // + el logo de AgroCow (así no se repite el nombre)
 
   // 3 · Solución (0:50–1:30). Después de "Así funciona" va el video del MVP: arranca solo al llegar a la pantalla.
-  { block: 2, kind: 'flow', title: 'ASÍ FUNCIONA AGROCOW' },
+  { block: 2, kind: 'flow', title: 'CÓMO FUNCIONA' },
   { block: 2, kind: 'video', title: 'Video del MVP', src: 'media/mvp.mp4', poster: 'media/mvp-poster.webp', cap: 'MVP · YOLO11n + ByteTrack' },
   {
     block: 2, kind: 'steps', title: 'Funciona en tres pasos',

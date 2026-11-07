@@ -52,6 +52,7 @@ function mapSvg() {
     <text class="out" x="${MAP.argentinaLabel[0] - 40}" y="${MAP.argentinaLabel[1] + 30}" text-anchor="end">ARGENTINA</text></svg>`;
 }
 
+const LOGO_INLINE = `<picture><source type="image/webp" srcset="brand/agrocow-logo-240.webp 240w, brand/agrocow-logo-480.webp 480w" sizes="(min-width: 900px) 30rem, 70vw"><img class="logo-inline" src="brand/agrocow-logo-480.png" alt="AgroCow" width="480" height="86" decoding="async"></picture>`;
 const LOGO = `<picture><source type="image/webp" srcset="brand/agrocow-logo-240.webp 240w, brand/agrocow-logo-480.webp 480w" sizes="(min-width: 900px) 30rem, 80vw"><img class="logo-big" src="brand/agrocow-logo-480.png" alt="AgroCow" width="480" height="86" decoding="async"></picture>`;
 
 /* ------------------------------------------------------------------ render */
@@ -71,7 +72,7 @@ const RENDER = {
     <p class="cap" data-reveal>${s.cap}</p>
     ${sub(s.sub)}`,
   rider: (s, i) => `<div class="copy">${title(i, s.title)}${sub(s.sub)}</div>${RIDER}`,
-  team: (s, i) => `${LOGO}<h2 id="${hid(i)}" tabindex="-1" class="title" data-reveal>${s.title}</h2>`,
+  team: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="team-h" data-reveal>${s.title} ${LOGO_INLINE}</h2>`,
   flow: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="flow" data-reveal>${s.title}</h2>`,
   video: (s, i) => `
     <h2 id="${hid(i)}" tabindex="-1" class="sr-only">${s.title}</h2>

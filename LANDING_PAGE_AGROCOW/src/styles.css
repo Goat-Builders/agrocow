@@ -65,8 +65,9 @@ body[data-kind="q"] .brand, body[data-kind="flow"] .brand, body[data-kind="video
 .k-q, .k-flow { align-items: center; text-align: center; }
 .k-team, .k-end { align-items: center; justify-content: center; text-align: center; }
 .logo-big { width: min(80vw, 34rem); height: auto; }
-.k-team .logo-big { width: min(70vw, 24rem); }
-.k-team .title { max-width: none; }
+/* «Somos» + logo en una sola línea: el nombre va en el logo, no se escribe dos veces */
+.team-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.25em 0.4em; font-size: clamp(48px, 8vw, 190px); line-height: 1; font-weight: 700; letter-spacing: -0.03em; margin: 0; }
+.logo-inline { height: 0.85em; width: auto; }
 .k-closing .sub { color: var(--lime); font-weight: 700; max-width: none; }
 
 /* portada: texto a la izquierda sobre el video, vacas a la derecha */

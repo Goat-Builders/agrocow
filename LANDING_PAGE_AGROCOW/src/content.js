@@ -13,7 +13,7 @@ export const BLOCKS = [
 ];
 
 // kind: cover | q (pregunta retórica, sola) | fig (cifra grande) | rider | team | flow (transición)
-//       steps | dots | map | timeline | fee | closing
+//       video (video del MVP) | steps | dots | map | timeline | fee | closing
 export const screens = [
   // 1 · Problema (0:00–0:30)
   { block: 0, kind: 'cover', title: 'Cuatro segundos por *vaca*', sub: 'Ahora, con cinco mil. Todos los días.' },
@@ -27,8 +27,9 @@ export const screens = [
   { block: 1, kind: 'rider', title: 'El recorredor trabaja todo el *día*', sub: 'Es propenso a errores' },
   { block: 1, kind: 'team', title: 'Somos AgroCow' },
 
-  // 3 · Solución (0:50–1:30). Entre la pantalla "Así funciona" y la siguiente se proyecta el video del MVP (30 s).
+  // 3 · Solución (0:50–1:30). Después de "Así funciona" va el video del MVP: arranca solo al llegar a la pantalla.
   { block: 2, kind: 'flow', title: 'ASÍ FUNCIONA AGROCOW' },
+  { block: 2, kind: 'video', title: 'Video del MVP', src: 'media/mvp.mp4', poster: 'media/mvp-poster.webp', cap: 'MVP · YOLO11n + ByteTrack' },
   {
     block: 2, kind: 'steps', title: 'Funciona en tres pasos',
     steps: [

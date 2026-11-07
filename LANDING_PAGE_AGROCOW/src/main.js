@@ -73,6 +73,15 @@ const RENDER = {
   rider: (s, i) => `<div class="copy">${title(i, s.title)}${sub(s.sub)}</div>${RIDER}`,
   team: (s, i) => `${LOGO}<h2 id="${hid(i)}" tabindex="-1" class="title" data-reveal>${s.title}</h2>`,
   flow: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="flow" data-reveal>${s.title}</h2>`,
+  video: (s, i) => `
+    <h2 id="${hid(i)}" tabindex="-1" class="sr-only">${s.title}</h2>
+    <figure class="mvp" data-reveal>
+      <div class="mvp-frame">
+        <video class="mvp-video" src="${s.src}" poster="${s.poster}" muted playsinline preload="metadata" width="1280" height="720" aria-label="${s.title}"></video>
+        <button class="mvp-play" type="button" aria-label="Reproducir video">${svg('0 0 24 24', '<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>')}</button>
+      </div>
+      <figcaption class="mvp-cap">${s.cap}</figcaption>
+    </figure>`,
   steps: (s, i) => `
     <h2 id="${hid(i)}" tabindex="-1" class="sr-only">${s.title}</h2>
     <ol class="steps3" data-line data-reveal>
@@ -96,6 +105,30 @@ const RENDER = {
 $('#contenido').innerHTML = screens.map((s, i) => `
   <section class="chapter k-${s.kind}" id="s${i + 1}" data-i="${i}" data-kind="${s.kind}" aria-labelledby="${hid(i)}">${RENDER[s.kind](s, i)}</section>`).join('');
 $$('.chapter').forEach((ch) => $$('[data-reveal]', ch).forEach((el, n) => el.style.setProperty('--d', Math.min(n, 3))));
+
+/* ------------------------------------------------------------ video del MVP */
+// Arranca desde el inicio al llegar a su pantalla y se pausa al salir. Clic o botón: pausa / reanuda.
+const mvpVideos = $$('.mvp-video');
+function syncVideos(i) {
+  mvpVideos.forEach((v) => {
+    const here = Number(v.closest('.chapter').dataset.i) === i;
+    if (here) {
+      v.currentTime = 0;
+      v.play().catch(() => v.closest('.mvp').classList.add('is-paused'));
+    } else if (!v.paused) {
+      v.pause();
+    }
+  });
+}
+mvpVideos.forEach((v) => {
+  const fig = v.closest('.mvp');
+  const toggle = () => (v.paused ? v.play().catch(() => {}) : v.pause());
+  v.addEventListener('play', () => fig.classList.remove('is-paused'));
+  v.addEventListener('pause', () => fig.classList.add('is-paused'));
+  v.addEventListener('click', toggle);
+  $('.mvp-play', fig).addEventListener('click', toggle);
+  fig.classList.add('is-paused');
+});
 
 /* ------------------------------------------------------------ navegación */
 const sections = $$('.chapter');
@@ -122,9 +155,11 @@ function indexFromScroll() {
   return idx;
 }
 function setActive(i, { announce = false, hash = true } = {}) {
+  const changed = cur !== i || !document.body.dataset.kind;
   cur = i;
   document.body.dataset.ch = String(i);
   document.body.dataset.kind = screens[i].kind;
+  if (changed) syncVideos(i);
   if (hash) { try { history.replaceState(null, '', `#${i + 1}`); } catch { /* file:// o iframe */ } }
   if (announce) live.textContent = `Pantalla ${i + 1} de ${screens.length}: ${BLOCKS[screens[i].block].label}`;
 }

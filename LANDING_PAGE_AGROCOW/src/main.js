@@ -1,7 +1,9 @@
 import '@fontsource/space-grotesk/400.css';
 import '@fontsource/space-grotesk/700.css';
+import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
 import { BLOCKS, screens } from './content.js';
+import { mountScrub } from './scrub.js';
 import { MAP } from './map-data.js';
 
 document.documentElement.classList.add('js');
@@ -65,11 +67,7 @@ const RENDER = {
     <div class="cover-copy">
       <h1 id="${hid(i)}" tabindex="-1" class="title title--xl" data-reveal>${kw(s.title)}</h1>
       ${sub(s.sub)}
-    </div>
-    <picture class="cover-img" data-reveal>
-      <source type="image/avif" srcset="media/scene-b-poster-640.avif 640w, media/scene-b-poster-960.avif 960w" sizes="(min-width: 900px) 50vw, 100vw">
-      <img src="media/scene-b-poster-960.webp" srcset="media/scene-b-poster-640.webp 640w, media/scene-b-poster-960.webp 960w" sizes="(min-width: 900px) 50vw, 100vw" alt="Corral de un feedlot con vacas en el comedero" width="960" height="540" fetchpriority="high" decoding="async">
-    </picture>`,
+    </div>`,
   q: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="q" data-reveal>${s.q}</h2>`,
   fig: (s, i) => `
     <h2 id="${hid(i)}" tabindex="-1" class="fig" data-reveal>${s.fig}</h2>
@@ -109,6 +107,8 @@ const sections = $$('.chapter');
 const live = $('#live');
 const progress = $('#progress');
 const blockStart = BLOCKS.map((_, b) => screens.findIndex((s) => s.block === b));
+let scrub = null;
+let intent = false; // ¿ya hubo scroll, tecla o toque? (recién ahí se pide el video)
 let tops = [];
 let cur = 0;
 let animating = false;
@@ -165,13 +165,14 @@ const advance = (dir) => goTo(cur + dir);
 
 function frame() {
   rafScroll = 0;
+  scrub?.read();
   const maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
   progress.style.transform = `scaleX(${Math.min(1, window.scrollY / maxScroll).toFixed(4)})`;
   if (!animating) { const now = indexFromScroll(); if (now !== cur) setActive(now); }
 }
 function onScroll() { if (!rafScroll) rafScroll = requestAnimationFrame(frame); }
 window.addEventListener('scroll', onScroll, { passive: true });
-const remeasure = () => { measure(); onScroll(); };
+const remeasure = () => { measure(); scrub?.layout(); onScroll(); };
 window.addEventListener('resize', remeasure);
 new ResizeObserver(remeasure).observe($('#contenido'));
 document.fonts?.ready.then(remeasure);
@@ -210,12 +211,36 @@ document.addEventListener('keydown', (e) => {
   return undefined;
 });
 
-/* ------------------------------------------------------------------ inicio */
+/* ----------------------------------------------- fondo: video real con las detecciones del modelo */
+// El video avanza cuadro a cuadro con el scroll (técnica de scroll-world). Hasta la primera interacción solo se ve
+// el póster con las cajas; nunca se carga con movimiento reducido o ahorro de datos.
+function videoAllowed() {
+  const c = navigator.connection;
+  const saveData = Boolean(c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || '')));
+  return !reduced() && !saveData;
+}
 measure();
+scrub = mountScrub($('#stage'), {
+  scenes: [{ id: 'scene-b', base: true, clip: 'media/scene-b.mp4', clipM: 'media/scene-b-m.mp4', poster: 'media/scene-b-poster' }],
+  bounds: () => [{ start: tops[0], end: tops[LAST] }],
+  tracksUrl: 'media/tracks.json',
+});
+const enableVideo = () => scrub.setEnabled(videoAllowed());
+const INTENT = ['scroll', 'keydown', 'pointerdown', 'touchstart', 'wheel'];
+const onIntent = () => {
+  if (intent) return;
+  intent = true;
+  INTENT.forEach((ev) => window.removeEventListener(ev, onIntent));
+  enableVideo();
+};
+INTENT.forEach((ev) => window.addEventListener(ev, onIntent, { passive: true }));
+reduceQuery.addEventListener?.('change', () => { if (intent) enableVideo(); });
+
+/* ------------------------------------------------------------------ inicio */
 const fromHash = Number((location.hash.match(/^#(\d+)$/) || [])[1]) - 1;
-if (fromHash > 0 && fromHash <= LAST) { setActive(fromHash, { hash: false }); window.scrollTo(0, tops[fromHash]); } else { setActive(0, { hash: false }); }
+if (fromHash > 0 && fromHash <= LAST) { onIntent(); setActive(fromHash, { hash: false }); window.scrollTo(0, tops[fromHash]); } else { setActive(0, { hash: false }); }
 frame();
 window.addEventListener('load', remeasure);
 
 // Para pruebas automáticas.
-window.__agrocow = { goTo, advance, get current() { return cur; }, count: screens.length, blockStart };
+window.__agrocow = { goTo, advance, get current() { return cur; }, count: screens.length, blockStart, get scrub() { return scrub.state; } };

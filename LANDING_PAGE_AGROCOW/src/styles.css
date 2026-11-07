@@ -67,15 +67,34 @@ body[data-kind="q"] .brand, body[data-kind="flow"] .brand, body[data-kind="end"]
 .k-team .title { max-width: none; }
 .k-closing .sub { color: var(--lime); font-weight: 700; max-width: none; }
 
-/* portada: texto + foto */
-.k-cover { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; padding-right: 0; padding-top: 96px; }
-.cover-copy { display: flex; flex-direction: column; gap: clamp(16px, 2vw, 32px); }
-.cover-img { margin-right: calc(-1 * var(--gutter)); }
-.cover-img img { width: 100%; height: auto; max-height: 46vh; object-fit: cover; border-radius: 16px 0 0 16px; border-left: 6px solid var(--lime); }
-@media (min-width: 900px) {
-  .k-cover { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: clamp(24px, 4vw, 80px); padding-top: 56px; }
-  .cover-img img { height: 76vh; max-height: none; }
+/* portada: texto a la izquierda sobre el video, vacas a la derecha */
+.cover-copy { display: flex; flex-direction: column; gap: clamp(16px, 2vw, 32px); max-width: 52rem; }
+@media (max-width: 999px) { .k-cover { justify-content: flex-end; } }
+
+/* ═══ FONDO: video real cuadro a cuadro (técnica de scroll-world) con las detecciones del modelo ═══ */
+.stage { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; contain: strict; background: var(--bg); }
+.sc { position: absolute; inset: 0; }
+.sc-poster img, .sc-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }
+.sc.has-clip .sc-poster { opacity: 0; }
+.sc-video { z-index: 1; }
+.sc-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; overflow: visible; }
+.sc-boxes { position: absolute; inset: 0; z-index: 3; contain: strict; }
+.trk { position: absolute; border: 2px solid var(--lime); opacity: 0; border-radius: 2px; }
+.trk.trk--focus { border-width: 3px; }
+.trk span { position: absolute; left: -2px; top: -1.35rem; font: 400 0.7rem/1.3rem 'IBM Plex Mono', ui-monospace, monospace; padding: 0 6px; color: var(--bg); background: var(--lime); white-space: nowrap; }
+.sc-trails, .sc-zone, .sc-gaps { opacity: 0; }
+/* velos: portada = degradado a la izquierda (el texto manda, las vacas se ven); resto = velo parejo, texto siempre legible */
+.stage::before, .stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; transition: opacity var(--t) var(--ease); }
+.stage::after { z-index: 4; opacity: 0; background: linear-gradient(90deg, rgb(11 19 14 / 0.96) 0%, rgb(11 19 14 / 0.9) 40%, rgb(11 19 14 / 0.3) 70%, rgb(11 19 14 / 0.4) 100%), linear-gradient(0deg, rgb(11 19 14 / 0.85) 0%, transparent 30%); }
+.stage::before { z-index: 5; background: rgb(11 19 14 / 0.86); opacity: 1; }
+body[data-kind="cover"] .stage::before { opacity: 0; }
+body[data-kind="cover"] .stage::after { opacity: 1; }
+body[data-kind="flow"] .stage::before { opacity: 0.8; }
+@media (max-width: 999px) {
+  .sc { bottom: auto; height: 58vh; height: 58svh; }
+  body[data-kind="cover"] .stage::after { background: linear-gradient(0deg, rgb(11 19 14 / 1) 0%, rgb(11 19 14 / 0.97) 44%, rgb(11 19 14 / 0.2) 66%, rgb(11 19 14 / 0.2) 100%); }
 }
+main { position: relative; z-index: 1; }
 
 /* ilustraciones */
 .art { color: var(--white); }

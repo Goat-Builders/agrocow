@@ -12,6 +12,8 @@
   <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="64x64" href="brand/favicon-64.png">
   <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+  <link rel="preload" as="image" type="image/avif" fetchpriority="high"
+        imagesrcset="media/scene-b-poster-640.avif 640w, media/scene-b-poster-960.avif 960w" imagesizes="100vw">
 </head>
 <body>
   <a class="skip" href="#contenido">Saltar al contenido</a>
@@ -25,6 +27,9 @@
     </picture>
   </a>
   <div class="progress" aria-hidden="true"><div class="progress-bar" id="progress"></div></div>
+
+  <!-- Fondo: video real de vacas que avanza cuadro a cuadro con el scroll, con las detecciones del modelo. Decorativo. -->
+  <div class="stage" id="stage" aria-hidden="true"></div>
 
   <!-- Teclado: → / Espacio avanzan, ← vuelve, 1–6 salta de bloque, F pantalla completa (ver README) -->
   <main id="contenido"></main>

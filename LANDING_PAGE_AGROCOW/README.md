@@ -48,5 +48,6 @@ El motor (`agrotrack_cv`) detecta con YOLO11, sigue con ByteTrack, mide tiempo p
 ## Diseño
 
 - Logo oficial (`assets/brand`, en `public/brand/`) y lima #BEFB03 como acento sobre verde corral casi negro.
-- Ilustraciones propias (recorredor a caballo, mapa de Argentina, Brasil y EE. UU. generado de Natural Earth, dominio público). Foto del corral: video CC0 de Wikimedia Commons.
-- Sin video ni desenfoques: ~150 KiB. La demo con video y detecciones sobre scroll (sticky, 5 etapas) quedó en el historial de git en el commit `4007ec3`.
+- **Fondo:** video real de vacas (clip CC0 de Wikimedia Commons) que avanza cuadro a cuadro con el scroll (técnica de [scroll-world](https://github.com/oso95/scroll-world), MIT, ver `src/vendor/`). Encima se dibujan las cajas con ID que el pipeline (YOLO11n + ByteTrack, `agrotrack_cv`) calculó sobre ese mismo clip, guardadas en `public/media/tracks.json`. En la portada se ve entero; en el resto, un velo oscuro mantiene el contraste del texto. El video se descarga con la primera interacción y nunca con movimiento reducido o ahorro de datos (sin video queda el póster con las cajas).
+- Ilustraciones propias (recorredor a caballo, mapa de Argentina, Brasil y EE. UU. generado de Natural Earth, dominio público).
+- La versión con la demo por etapas sobre scroll (detección, seguimiento, zonas y conducta, con el id 01 aislado) quedó en el historial de git en el commit `4007ec3`.

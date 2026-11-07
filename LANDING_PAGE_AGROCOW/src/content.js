@@ -1,107 +1,58 @@
-// ÚNICA fuente de textos de la web. Sigue el guion del pitch (6 bloques + demo).
-// Reglas: una idea por diapositiva y pocas palabras; *palabra* = palabra clave (va en lima, una por diapositiva).
-// Cada cifra tiene su fuente en la nota al pie de su diapositiva, o figura como cálculo propio / estimación.
+// ÚNICA fuente de textos de la web: pantallas para proyectar detrás del orador (pitch de 2:30 min).
+// Reglas del brief: cada pantalla tiene título (máx. 6 palabras), subtítulo opcional (máx. 10) y UNA imagen
+// o cifra grande; nunca más de 15 palabras; solo cifras y frases del guion. *palabra* = resaltada en lima.
+// Las fuentes de cada cifra NO van en pantalla: están en public/fuentes.html y en el README.
 
-export const REPO_URL = 'https://github.com/felipebridge/agrocow';
-export const TEAM = ['Matías Rodrigo Bellido', 'Felipe Bridge', 'Emiliano Lescuras', 'Valentin Ruvera'];
-
-export const chapters = [
-  { id: 'inicio', label: 'Inicio' },
-  { id: 'problema', label: 'Problema' },
-  { id: 'por-que', label: 'Por qué' },
-  { id: 'solucion', label: 'Solución' },
-  { id: 'demo', label: 'Demo' },
-  { id: 'mercado', label: 'Mercado' },
-  { id: 'negocio', label: 'Negocio' },
-  { id: 'cierre', label: 'Cierre' },
+export const BLOCKS = [
+  { label: 'Problema', time: '0:00' },
+  { label: 'Por qué', time: '0:30' },
+  { label: 'Solución', time: '0:50' },
+  { label: 'Mercado', time: '1:30' },
+  { label: 'Negocio', time: '1:45' },
+  { label: 'Cierre', time: '2:05' },
 ];
-export const DEMO = 4; // índice de la diapositiva con la secuencia de visión
 
-// 0 · Gancho
-export const hero = {
-  title: ['Cuatro segundos por ', { mark: 'vaca' }, '.'],
-  sub: 'Con 5.000 vacas, ¿quién ve a tiempo a la enferma?',
-  fn: 'Un recorredor mira cada animal de 4 a 8 segundos (cálculo propio).',
-};
+// kind: cover | q (pregunta retórica, sola) | fig (cifra grande) | rider | nosensor | team | flow (transición)
+//       steps | dots | map | timeline | fee | closing | end
+export const screens = [
+  // 1 · Problema (0:00–0:30)
+  { block: 0, kind: 'cover', title: 'Cuatro segundos por *vaca*', sub: 'Ahora, con cinco mil. Todos los días.' },
+  { block: 0, kind: 'q', q: '¿Cuántos enfermos se les escaparían?' },
+  { block: 0, kind: 'fig', fig: '3 DE CADA 4', cap: 'ENFERMOS SE ESCAPAN', sub: 'Al resto, con días de retraso' },
+  { block: 0, kind: 'fig', fig: '1 CADA 10 MIN', cap: 'MUERE UN ANIMAL DE FEEDLOT EN ARGENTINA' },
+  { block: 0, kind: 'fig', fig: '80.000 USD', cap: 'FEEDLOT DE 1.000 LUGARES', sub: '= 100 a 150 terneros por año' },
 
-// 1 · Problema
-export const problem = {
-  title: 'El ojo humano llega *tarde*.',
-  stats: [
-    { pre: '', n: [3], post: ' de 4', label: 'enfermos pasan sin detectar' },
-    { pre: '1 cada ', n: [10], post: ' min', label: 'muere un animal en los feedlots de Argentina' },
-    { pre: '', n: [50, 150], post: '', label: 'terneros perdidos por año en un feedlot de 1.000' },
-  ],
-  fn: 'Timsit et al., 2016: la inspección visual detecta el 27 % de las neumonías. Cálculo propio: unas 50.000 muertes por año (mortalidad del 1,0 al 1,7 %; Micheloud 2026, Laguzzi 2015) y USD 650 por ternero.',
-  sourceText: 'Timsit et al., 2016',
-  sourceHref: 'https://www.pubmed.gov/27931931/',
-};
+  // 2 · Por qué ahora y por qué nosotros (0:30–0:50)
+  { block: 1, kind: 'rider', title: 'El recorredor trabaja todo el *día*', sub: 'No necesita otra tarea' },
+  { block: 1, kind: 'nosensor', title: 'No tocamos al *animal*', sub: 'Otros países: un sensor a cada animal' },
+  { block: 1, kind: 'team', title: 'Somos AgroCow' },
 
-// 2 · Por qué ahora y por qué nosotros
-export const why = {
-  title: '¿Hace falta *tocar* a cada vaca?',
-  today: { k: 'Hoy', t: 'Un sensor por animal' },
-  us: { k: 'AgroCow', t: 'Solo cámaras' },
-  line: 'Y el recorredor no suma ninguna tarea.',
-  team: 'Somos AgroCow',
-};
+  // 3 · Solución (0:50–1:30). Entre la pantalla "Así funciona" y la siguiente se proyecta el video del MVP (30 s).
+  { block: 2, kind: 'flow', title: 'ASÍ FUNCIONA AGROCOW' },
+  {
+    block: 2, kind: 'steps', title: 'Funciona en tres pasos',
+    steps: [
+      { icon: 'camera', t: 'Cámaras', s: 'comedero, bebedero, corral' },
+      { icon: 'detect', t: 'Detecta el cambio', s: 'come menos, se aísla' },
+      { icon: 'phone', t: 'Alerta al celular', s: '' },
+    ],
+  },
+  { block: 2, kind: 'dots', title: 'Va directo a quien lo *necesita*', sub: 'Hoy mira mil animales para encontrar uno' },
 
-// 3 · Solución
-export const solution = {
-  title: 'La conducta avisa *antes*.',
-  steps: [
-    { icon: 'camera', t: 'Cámaras', s: 'comedero, bebedero y corral' },
-    { icon: 'pulse', t: 'Software', s: 'aprende la conducta: come o bebe menos, se aísla, se echa' },
-  ],
-  anticipa: 'Anticipa *neumonía*, terneros que no comen y problemas digestivos.',
-  punch: ['Hoy el recorredor mira mil para encontrar uno.', 'Con AgroCow, va directo.'],
-  // Nota al pie: lo que hace el prototipo hoy (agrotrack_cv) y lo que falta. Sin prometer de más.
-  fn: 'Detecta con YOLO11 y sigue con ByteTrack, que da un número a cada animal. Mide tiempo en comedero y bebedero, distancia al grupo y movimiento; reglas de conducta generan alertas para que una persona las revise. Hoy el prototipo alerta por animal aislado, inmovilidad prolongada y cambio de actividad del grupo. En desarrollo: aprender la rutina de cada animal, reconocer «echado» y comer o beber menos. Desafío abierto: identificar a cada animal de un día a otro (hoy el número vale dentro de un video).',
-};
+  // 4 · Mercado (1:30–1:45)
+  { block: 3, kind: 'fig', fig: '+4 MILLONES', cap: 'DE CABEZAS POR AÑO PASAN POR FEEDLOTS EN ARGENTINA' },
+  { block: 3, kind: 'map', fig: '1.000 MILLONES', cap: 'DE USD DE PÉRDIDAS POR AÑO' },
+  { block: 3, kind: 'q', q: '¿Cómo entramos al mercado?' },
+  { block: 3, kind: 'fig', fig: '60 %', cap: 'DE LAS MUERTES, EN LOS CORRALES DE INGRESO', sub: 'Empezamos por feedlots medianos' },
+  {
+    block: 3, kind: 'timeline', title: 'Cómo crecemos',
+    steps: ['Piloto', 'Todo el feedlot', 'Feedlots más grandes', 'Otros países'],
+  },
 
-// 4 · Demo: el pipeline de visión, etapa por etapa, sobre video real
-export const demo = {
-  title: '¿Y si la cámara mirara *por él*?',
-  note: 'Video real · detecciones del prototipo',
-  cue: 'Avanzá para ver cómo detecta',
-  steps: [
-    { t: 'Video', s: 'cuadro a cuadro' },
-    { t: 'Detección', s: 'cada vaca, con su confianza' },
-    { t: 'Seguimiento', s: 'un ID para cada una' },
-    { t: 'Zonas', s: 'segundos en el comedero' },
-    { t: 'Conducta', s: 'distancia a la vecina más cercana' },
-  ],
-};
+  // 5 · Modelo de negocio (1:45–2:05)
+  { block: 4, kind: 'fee', title: 'Cobramos un *abono* por cabeza', sub: 'Cada animal que entra a un feedlot es ingreso' },
 
-// 5 · Mercado
-export const market = {
-  title: '¿Cuánto cuesta llegar *tarde*?',
-  stats: [
-    { pre: '+', n: [4], post: ' MILL.', label: 'cabezas por año en feedlots de Argentina' },
-    { pre: 'USD ', n: [10], post: ' MILL.', label: 'de mercado para AgroCow en Argentina' },
-    { pre: 'USD ', n: [1000], post: ' MILL.', label: 'en pérdidas por año, sumando Brasil y EE. UU.' },
-  ],
-  fn: 'Unos 4,25 millones de cabezas por año. Mercado: estimación a USD 2,5 por cabeza (precio supuesto). Pérdidas: estimación de confianza baja, entre USD 460 y 1.530 millones; es la pérdida total, no lo que se evita.',
-};
-
-// 6 · Modelo de negocio y plan de entrada
-export const business = {
-  title: 'Cobramos un *abono* por cada cabeza.',
-  line: 'El feedlot paga por cada animal que cuidamos.',
-  how: 'Así llegamos a más feedlots:',
-  plan: [
-    { big: 'Probamos', small: 'en un feedlot (piloto)' },
-    { big: 'Veterinarios', small: 'lo ofrecen a sus clientes' },
-    { big: '20 feedlots', small: 'en tres años' },
-  ],
-  fn: 'Después: tambos y pastoreo. El canal veterinario es una propuesta a validar.',
-};
-
-// 7 · Cierre
-export const closing = {
-  before: ['Un recorredor tiene', '4 segundos', 'por vaca.'],
-  after: ['AgroCow le da', '4 días', 'de ventaja.'],
-  thanks: 'Somos AgroCow. Muchas gracias.',
-  cta: 'Ver el código',
-  fn: 'Cuatro días: el piso del rango de 4 a 7 días de anticipación con datos de conducta (por ejemplo, Wolfger et al., 2015).',
-};
+  // 6 · Cierre (2:05–2:20)
+  { block: 5, kind: 'closing', title: 'TRATARLO O ENTERRARLO', sub: 'Con AgroCow, lo ve a tiempo' },
+  { block: 5, kind: 'end', title: 'AgroCow' },
+];

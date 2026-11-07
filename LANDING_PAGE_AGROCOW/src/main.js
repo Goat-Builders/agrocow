@@ -1,11 +1,8 @@
 import '@fontsource/space-grotesk/400.css';
 import '@fontsource/space-grotesk/700.css';
-import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
-import { mountScrub } from './scrub.js';
-import {
-  REPO_URL, TEAM, chapters, DEMO, hero, problem, why, solution, demo, market, business, closing,
-} from './content.js';
+import { BLOCKS, screens } from './content.js';
+import { MAP } from './map-data.js';
 
 document.documentElement.classList.add('js');
 
@@ -13,194 +10,105 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reduced = () => reduceQuery.matches;
-const LAST = chapters.length - 1; // 0 = Inicio, 1–7 = diapositivas numeradas
-const pad = (n) => String(n).padStart(2, '0');
-const num = (n) => n.toLocaleString('es-AR');
-const kw = (s) => s.replace(/\*(.+?)\*/g, '<em class="k">$1</em>'); // *palabra clave* → lima
-let intent = false; // ¿ya hubo scroll, tecla o toque? (recién ahí se pide el video)
-let scrub = null;
+const LAST = screens.length - 1;
+const kw = (s) => s.replace(/\*(.+?)\*/g, '<em class="k">$1</em>'); // *palabra* → lima
 
-const svg = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${d}</svg>`;
+const svg = (vb, body, cls = '') => `<svg class="${cls}" viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
 const ICONS = {
-  camera: svg('<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>'),
-  pulse: svg('<path d="M3 12h4l2-5 4 10 2-5h6"/>'),
-  list: svg('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 11h6M9 15h4"/>'),
-  sensor: svg('<circle cx="12" cy="13" r="2.5"/><path d="M7.5 9.5a6 6 0 0 1 9 0M5 7a9.5 9.5 0 0 1 14 0"/>'),
-  eye: svg('<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/>'),
+  camera: svg('0 0 24 24', '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>'),
+  detect: svg('0 0 24 24', '<path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/><circle cx="12" cy="12" r="3"/>'),
+  phone: svg('0 0 24 24', '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 9.5a2 2 0 0 1 4 0c0 3 1 4 1 4H9s1-1 1-4zM11 16h2"/>'),
 };
 
+// Ilustraciones genéricas (sin fotos de personas ni logos de terceros)
+const RIDER = `<svg class="art art--rider" viewBox="0 0 240 190" aria-hidden="true" focusable="false">
+  <path d="M40 96C38 84 52 76 76 74C104 70 136 70 158 78C166 66 174 52 184 40L190 28L196 38C206 46 216 56 220 66C222 72 216 76 210 74L200 70C192 76 186 84 184 96C186 108 180 118 170 120L150 122C130 126 100 126 82 120C66 116 46 112 40 96Z"/>
+  <path d="M166 116H177L179 150L183 176H168L168 154L160 130ZM146 118H157L157 150L161 176H148L146 152ZM56 108L76 112L78 144L82 176H68L66 148L50 124ZM84 118H98L96 150L98 176H86L84 150Z"/>
+  <path d="M42 90C24 96 18 116 24 140C28 128 30 116 40 108Z"/>
+  <path d="M104 74L114 40H128L124 74ZM118 72L136 96L130 114L118 110L114 90Z"/>
+  <circle cx="122" cy="28" r="10"/>
+  <path d="M104 21H142M112 20L114 8H132L134 20" class="hat"/>
+  <path d="M124 48L148 62L158 76" class="arm"/></svg>`;
+const NOSENSOR = svg('0 0 200 160', `
+  <circle cx="100" cy="84" r="22"/><path d="M62 52a54 54 0 0 1 76 0M40 30a86 86 0 0 1 120 0"/>
+  <path d="M30 140 170 20" class="strike"/>`, 'art art--nosensor');
+
+function dotsSvg() {
+  const cols = 40; const rows = 25; const hit = 9 * cols + 27;
+  let c = '';
+  for (let i = 0; i < cols * rows; i += 1) {
+    const x = (i % cols) * 10 + 5; const y = Math.floor(i / cols) * 10 + 5;
+    if (i !== hit) c += `<circle cx="${x}" cy="${y}" r="3"/>`;
+  }
+  const hx = (hit % cols) * 10 + 5; const hy = Math.floor(hit / cols) * 10 + 5;
+  return `<svg class="art art--dots" viewBox="0 0 400 250" aria-hidden="true" focusable="false"><g class="d">${c}</g>
+    <g class="hit"><circle cx="${hx}" cy="${hy}" r="5.5"/><path d="M${hx - 14} ${hy - 6}v-8h8M${hx + 6} ${hy - 14}h8v8M${hx + 14} ${hy + 6}v8h-8M${hx - 6} ${hy + 14}h-8v-8"/></g></svg>`;
+}
+
+function mapSvg() {
+  const lab = (k, text) => `<text x="${MAP[k + 'Label'][0]}" y="${MAP[k + 'Label'][1]}" text-anchor="middle">${text}</text>`;
+  return `<svg class="art art--map" viewBox="0 0 ${MAP.w} ${MAP.h}" role="img" aria-label="Mapa de Argentina, Brasil y Estados Unidos">
+    <path class="oth" d="${MAP.others}"/><path class="hi" d="${MAP.usa}"/><path class="hi" d="${MAP.brazil}"/><path class="hi" d="${MAP.argentina}"/>
+    ${lab('usa', 'EE. UU.')}${lab('brazil', 'BRASIL')}
+    <text class="out" x="${MAP.argentinaLabel[0] - 40}" y="${MAP.argentinaLabel[1] + 30}" text-anchor="end">ARGENTINA</text></svg>`;
+}
+
+const LOGO = `<picture><source type="image/webp" srcset="brand/agrocow-logo-240.webp 240w, brand/agrocow-logo-480.webp 480w" sizes="(min-width: 900px) 30rem, 80vw"><img class="logo-big" src="brand/agrocow-logo-480.png" alt="AgroCow" width="480" height="86" decoding="async"></picture>`;
+
 /* ------------------------------------------------------------------ render */
-const section = (i, inner) => `<section class="chapter" id="${chapters[i].id}" data-i="${i}" aria-labelledby="t-${chapters[i].id}"><div class="slide">${inner}</div></section>`;
-const h2 = (i, text) => `<h2 id="t-${chapters[i].id}" tabindex="-1" data-reveal>${kw(text)}</h2>`;
-const fn = (text) => `<p class="fn" data-reveal>${text}</p>`;
-const kpi = (s) => `${s.pre}${s.n.map((v) => `<span data-count="${v}">${num(v)}</span>`).join('<span>–</span>')}${s.post}`;
-const stats = (list) => `<ul class="stats" data-stats>${list.map((s) => `<li class="stat" data-reveal><p class="kpi">${kpi(s)}</p><p class="stat-label">${s.label}</p></li>`).join('')}</ul>`;
+const hid = (i) => `t${i}`;
+const title = (i, text, extra = '') => `<h2 id="${hid(i)}" tabindex="-1" class="title ${extra}" data-reveal>${kw(text)}</h2>`;
+const sub = (text) => (text ? `<p class="sub" data-reveal>${kw(text)}</p>` : '');
 
-function renderHero() {
-  const title = hero.title.map((p) => (typeof p === 'string' ? p : `<span class="mark">${p.mark}</span>`)).join('');
-  return `
-  <section class="chapter" id="inicio" data-i="0" aria-labelledby="t-inicio">
-    <div class="slide hero-copy">
-      <h1 id="t-inicio" tabindex="-1">${title}</h1>
-      <p class="sub">${hero.sub}</p>
-      <p class="fn">${hero.fn}</p>
+const RENDER = {
+  cover: (s, i) => `
+    <div class="cover-copy">
+      <h1 id="${hid(i)}" tabindex="-1" class="title title--xl" data-reveal>${kw(s.title)}</h1>
+      ${sub(s.sub)}
     </div>
-  </section>`;
-}
+    <picture class="cover-img" data-reveal>
+      <source type="image/avif" srcset="media/scene-b-poster-640.avif 640w, media/scene-b-poster-960.avif 960w" sizes="(min-width: 900px) 50vw, 100vw">
+      <img src="media/scene-b-poster-960.webp" srcset="media/scene-b-poster-640.webp 640w, media/scene-b-poster-960.webp 960w" sizes="(min-width: 900px) 50vw, 100vw" alt="Corral de un feedlot con vacas en el comedero" width="960" height="540" fetchpriority="high" decoding="async">
+    </picture>`,
+  q: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="q" data-reveal>${s.q}</h2>`,
+  fig: (s, i) => `
+    <h2 id="${hid(i)}" tabindex="-1" class="fig" data-reveal>${s.fig}</h2>
+    <p class="cap" data-reveal>${s.cap}</p>
+    ${sub(s.sub)}`,
+  rider: (s, i) => `<div class="copy">${title(i, s.title)}${sub(s.sub)}</div>${RIDER}`,
+  nosensor: (s, i) => `<div class="copy">${title(i, s.title)}${sub(s.sub)}</div>${NOSENSOR}`,
+  team: (s, i) => `${LOGO}<h2 id="${hid(i)}" tabindex="-1" class="title" data-reveal>${s.title}</h2>`,
+  flow: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="flow" data-reveal>${s.title}</h2>`,
+  steps: (s, i) => `
+    <h2 id="${hid(i)}" tabindex="-1" class="sr-only">${s.title}</h2>
+    <ol class="steps3" data-line data-reveal>
+      ${s.steps.map((st, n) => `<li class="step3"><span class="step3-ic">${ICONS[st.icon]}</span><span class="step3-n" aria-hidden="true">${n + 1}</span><strong>${st.t}</strong>${st.s ? `<span class="step3-s">${st.s}</span>` : ''}</li>`).join('')}
+    </ol>`,
+  dots: (s, i) => `${title(i, s.title)}${sub(s.sub)}${dotsSvg()}`,
+  map: (s, i) => `
+    <div class="copy">
+      <h2 id="${hid(i)}" tabindex="-1" class="fig fig--m" data-reveal>${s.fig}</h2>
+      <p class="cap" data-reveal>${s.cap}</p>
+    </div>${mapSvg()}`,
+  timeline: (s, i) => `
+    <h2 id="${hid(i)}" tabindex="-1" class="sr-only">${s.title}</h2>
+    <ol class="tl" data-line data-reveal>
+      ${s.steps.map((t, n) => `<li class="tl-step"><span class="tl-dot">${n + 1}</span><strong>${t}</strong></li>`).join('')}
+    </ol>`,
+  fee: (s, i) => `${title(i, s.title, 'title--xl')}${sub(s.sub)}`,
+  closing: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="big" data-reveal>${s.title}</h2>${sub(s.sub)}`,
+  end: (s, i) => `<h2 id="${hid(i)}" tabindex="-1" class="sr-only">${s.title}</h2>${LOGO}`,
+};
 
-const renderProblem = () => section(1, `
-  ${h2(1, problem.title)}
-  ${stats(problem.stats)}
-  ${fn(problem.fn.replace(problem.sourceText, `<a class="src-link" href="${problem.sourceHref}" target="_blank" rel="noopener">${problem.sourceText}</a>`))}`);
-
-const renderWhy = () => section(2, `
-  ${h2(2, why.title)}
-  <div class="versus" data-reveal>
-    <div class="vs vs--today"><span class="vs-ic">${ICONS.sensor}</span><span class="vs-k">${why.today.k}</span><p class="vs-t">${why.today.t}</p></div>
-    <div class="vs vs--us"><span class="vs-ic">${ICONS.eye}</span><span class="vs-k">${why.us.k}</span><p class="vs-t">${why.us.t}</p></div>
-  </div>
-  <p class="line" data-reveal>${why.line}</p>
-  <p class="team" data-reveal><strong>${why.team}</strong> · ${TEAM.join(' · ')}</p>`);
-
-const renderSolution = () => section(3, `
-  ${h2(3, solution.title)}
-  <ol class="steps3" data-line data-reveal>
-    ${solution.steps.map((st) => `<li class="step3"><span class="step3-ic">${ICONS[st.icon]}</span><strong>${st.t}</strong><span>${st.s}</span></li>`).join('')}
-  </ol>
-  <p class="line" data-reveal>${kw(solution.anticipa)}</p>
-  <p class="punch" data-reveal>${solution.punch[0]} <b>${solution.punch[1]}</b></p>
-  ${fn(solution.fn)}`);
-
-function renderDemo() {
-  const d = demo;
-  return `
-  <section class="chapter seq" id="demo" data-i="${DEMO}" data-cv="0" aria-labelledby="t-demo">
-    <div class="seq-sticky">
-      <div class="seq-grid">
-        <div class="seq-intro glass glass--plate">
-          <h2 id="t-demo" tabindex="-1">${kw(d.title)}</h2>
-          <p class="seq-note">${d.note}</p>
-          <p class="cv-cue">${d.cue} <span aria-hidden="true">→</span></p>
-        </div>
-        <div class="cv-hud glass" id="cvHud" aria-live="polite">
-          <ol class="cv-steps">${d.steps.map((s, i) => `<li data-k="${i + 1}"><span class="cv-n">${i + 1}</span><div><strong>${s.t}</strong><span class="cv-s">${s.s}</span></div></li>`).join('')}</ol>
-          <p class="cv-metrics" id="cvMetrics"></p>
-        </div>
-      </div>
-    </div>
-  </section>`;
-}
-
-const renderMarket = () => section(5, `
-  ${h2(5, market.title)}
-  ${stats(market.stats)}
-  ${fn(market.fn)}`);
-
-const renderBusiness = () => section(6, `
-  ${h2(6, business.title)}
-  <p class="line" data-reveal>${business.line}</p>
-  <p class="how" data-reveal>${business.how}</p>
-  <ol class="plan" data-line data-reveal>
-    ${business.plan.map((p, i) => `<li class="plan-step"><span class="plan-dot">${i + 1}</span><strong>${p.big}</strong><span>${p.small}</span></li>`).join('')}
-  </ol>
-  ${fn(business.fn)}`);
-
-const renderClosing = () => section(7, `
-  <div class="contrast" data-reveal>
-    <p class="c-line c-before">${closing.before[0]} <b>${closing.before[1]}</b> ${closing.before[2]}</p>
-    <h2 class="c-line c-after" id="t-cierre" tabindex="-1">${closing.after[0]} <b>${closing.after[1]}</b> ${closing.after[2]}</h2>
-  </div>
-  <div class="thanks" data-reveal>
-    <p>${closing.thanks}</p>
-    <a class="btn" href="${REPO_URL}" target="_blank" rel="noopener">${closing.cta} <span aria-hidden="true">↗</span></a>
-  </div>
-  ${fn(closing.fn)}`);
-
-$('#contenido').innerHTML = [
-  renderHero(), renderProblem(), renderWhy(), renderSolution(), renderDemo(), renderMarket(), renderBusiness(), renderClosing(),
-].join('');
-
-$$('.chapter').forEach((ch) => $$('[data-reveal]', ch).forEach((el, i) => el.style.setProperty('--d', Math.min(i, 5))));
-
-/* ------------------------------------------------- contadores (una sola vez) */
-function countUp(list) {
-  if (reduced()) return;
-  $$('[data-count]', list).forEach((el) => {
-    const to = Number(el.dataset.count);
-    const t0 = performance.now();
-    const dur = 900;
-    const step = (now) => {
-      const t = Math.min(1, (now - t0) / dur);
-      el.textContent = num(Math.round(to * (1 - (1 - t) ** 3)));
-      if (t < 1) requestAnimationFrame(step);
-    };
-    el.textContent = '0';
-    requestAnimationFrame(step);
-  });
-}
-
-/* ------------------------------------ la demo: pipeline de visión en 5 etapas */
-const SEQ_STEPS = demo.steps.length;
-const seqEl = $('#demo');
-const cvMetrics = $('#cvMetrics');
-let cvStage = 0;
-document.body.dataset.cv = '0';
-const cvStepPx = () => window.innerHeight * 0.7; // igual que --cv-step en styles.css
-const seqTop = () => tops[DEMO] || 0;
-function cvFromScroll() {
-  const y = window.scrollY - seqTop();
-  return Math.max(0, Math.min(SEQ_STEPS, Math.floor((y + cvStepPx() * 0.5) / cvStepPx())));
-}
-// Cuadros del clip (scene-a, 267 cuadros) donde cae cada etapa. Dentro de cada una, el scroll avanza el video.
-// La vaca con id 01 camina separada del resto en los cuadros 36–47 (a 2,6–2,8 anchos, sobre la regla de «aislada»):
-// ahí se muestran Detección (señales) y Conducta (alerta).
-const STAGE_FRAMES = [[0, 6], [6, 26], [35, 45], [60, 120], [120, 180], [36, 42]];
-function frameFor(s) {
-  const j = Math.max(0, Math.min(SEQ_STEPS, Math.round(s)));
-  const u = j === 0 ? s / 0.5 : j === SEQ_STEPS ? (s - (j - 0.5)) / 0.5 : s - (j - 0.5);
-  const [a, b] = STAGE_FRAMES[j];
-  return a + (b - a) * Math.max(0, Math.min(1, u));
-}
-function setCv(n) {
-  if (n === cvStage) return;
-  cvStage = n;
-  seqEl.dataset.cv = String(n);
-  document.body.dataset.cv = String(n);
-  scrub?.setStage(n);
-  $$('.cv-steps li').forEach((li) => {
-    const k = Number(li.dataset.k);
-    li.classList.toggle('on', k === n);
-    li.classList.toggle('done', k < n);
-  });
-  if (n === 0) cvMetrics.textContent = '';
-}
-
-/* ------------------------------------------------- rendimiento: modo liviano */
-const liteParam = new URLSearchParams(location.search).get('lite');
-let liteDecided = liteParam !== null;
-function setLite(on, why2 = '') {
-  document.documentElement.classList.toggle('lite', on);
-  try { sessionStorage.setItem('agrocow-lite', on ? '1' : '0'); } catch { /* sin storage */ }
-  if (why2) $('#live').textContent = on ? 'Modo liviano activado' : 'Modo liviano desactivado';
-  if (intent) scrub?.setEnabled(videoAllowed());
-}
-if (liteParam === '1') setLite(true);
-else if (liteParam === null) { try { if (sessionStorage.getItem('agrocow-lite') === '1') { setLite(true); liteDecided = true; } } catch { /* sin storage */ } }
-
-const perf = { n: 0, slow: 0 };
-let movingTimer = 0;
-function markMoving() {
-  document.body.classList.add('moving');
-  clearTimeout(movingTimer);
-  movingTimer = setTimeout(() => document.body.classList.remove('moving'), 160);
-}
+$('#contenido').innerHTML = screens.map((s, i) => `
+  <section class="chapter k-${s.kind}" id="s${i + 1}" data-i="${i}" data-kind="${s.kind}" aria-labelledby="${hid(i)}">${RENDER[s.kind](s, i)}</section>`).join('');
+$$('.chapter').forEach((ch) => $$('[data-reveal]', ch).forEach((el, n) => el.style.setProperty('--d', Math.min(n, 3))));
 
 /* ------------------------------------------------------------ navegación */
 const sections = $$('.chapter');
 const live = $('#live');
-const hudNum = $('#hudNum');
-const hudLabel = $('#hudLabel');
 const progress = $('#progress');
+const blockStart = BLOCKS.map((_, b) => screens.findIndex((s) => s.block === b));
 let tops = [];
 let cur = 0;
 let animating = false;
@@ -213,179 +121,101 @@ function measure() {
   tops = sections.map((s) => s.getBoundingClientRect().top + window.scrollY);
 }
 function indexFromScroll() {
-  const y = window.scrollY + vh * 0.4;
+  const y = window.scrollY + vh * 0.5;
   let idx = 0;
   for (let i = 0; i < tops.length; i += 1) if (tops[i] <= y) idx = i;
   return idx;
 }
-
 function setActive(i, { announce = false, hash = true } = {}) {
   cur = i;
   document.body.dataset.ch = String(i);
-  hudNum.textContent = pad(i);
-  hudLabel.textContent = chapters[i].label;
-  if (hash) { try { history.replaceState(null, '', `#${chapters[i].id}`); } catch { /* file:// o iframe */ } }
-  if (announce) live.textContent = i === 0 ? 'Inicio' : `Diapositiva ${i} de ${LAST}: ${chapters[i].label}`;
+  document.body.dataset.kind = screens[i].kind;
+  if (hash) { try { history.replaceState(null, '', `#${i + 1}`); } catch { /* file:// o iframe */ } }
+  if (announce) live.textContent = `Pantalla ${i + 1} de ${screens.length}: ${BLOCKS[screens[i].block].label}`;
 }
 
-const easeOut = (t) => 1 - (1 - t) ** 5;
+const easeOut = (t) => 1 - (1 - t) ** 4;
+const SCROLL_MS = 450; // el brief pide transiciones de 0,5 s como máximo
 function scrollToY(target, instant) {
   cancelAnimationFrame(rafAnim);
   if (instant || reduced()) { window.scrollTo(0, target); animating = false; return; }
   const start = window.scrollY;
   const dist = target - start;
   if (Math.abs(dist) < 2) { animating = false; return; }
-  const dur = 800;
   const t0 = performance.now();
   animating = true;
-  let prev = 0;
   const step = (now) => {
-    if (prev && !liteDecided) { const d = now - prev; if (d < 400) { perf.n += 1; if (d > 40) perf.slow += 1; } }
-    prev = now;
-    const t = Math.min(1, (now - t0) / dur);
+    const t = Math.min(1, (now - t0) / SCROLL_MS);
     window.scrollTo(0, start + dist * easeOut(t));
     if (t < 1) rafAnim = requestAnimationFrame(step);
-    else {
-      animating = false;
-      onScroll();
-      // Si más de la mitad de los cuadros (de al menos 10, acumulados) tardó más de 40 ms, pasa solo a modo liviano.
-      if (!liteDecided && perf.n >= 10) { liteDecided = true; if (perf.slow / perf.n > 0.5) setLite(true, 'auto'); }
-    }
+    else { animating = false; onScroll(); }
   };
   rafAnim = requestAnimationFrame(step);
 }
-
-function goTo(i, { instant = false, announce = true, focus = true, fromBelow = false } = {}) {
+function goTo(i, { instant = false, announce = true, focus = true } = {}) {
   const idx = Math.max(0, Math.min(LAST, i));
   setActive(idx, { announce });
-  const target = idx === DEMO && fromBelow ? seqTop() + SEQ_STEPS * cvStepPx() : tops[idx];
-  scrollToY(target, instant);
-  setCv(idx === DEMO && fromBelow ? SEQ_STEPS : 0);
+  scrollToY(tops[idx], instant);
   if (focus) { const h = $('h1, h2', sections[idx]); if (h) h.focus({ preventScroll: true }); }
 }
-
-// Avanzar/volver: dentro de la demo, primero se recorren las 5 etapas del pipeline.
-function advance(dir) {
-  if (cur === DEMO) {
-    const k = cvStage + dir;
-    if (k >= 0 && k <= SEQ_STEPS) { setCv(k); scrollToY(seqTop() + k * cvStepPx()); return; }
-    goTo(DEMO + dir);
-    return;
-  }
-  if (cur === DEMO + 1 && dir < 0) { goTo(DEMO, { fromBelow: true }); return; }
-  goTo(cur + dir);
-}
+const advance = (dir) => goTo(cur + dir);
 
 ['wheel', 'touchstart', 'mousedown'].forEach((ev) =>
   window.addEventListener(ev, () => { cancelAnimationFrame(rafAnim); animating = false; }, { passive: true }));
 
-/* --------------------------------------------------------- scroll: progreso, diapositiva y etapa */
 function frame() {
   rafScroll = 0;
-  scrub?.read();
   const maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
   progress.style.transform = `scaleX(${Math.min(1, window.scrollY / maxScroll).toFixed(4)})`;
-  document.body.classList.toggle('past-hero', window.scrollY > vh * 0.12); // celular: el gancho sube sobre la foto
-  if (!animating) {
-    const now = indexFromScroll();
-    if (now !== cur) setActive(now);
-    setCv(cur === DEMO ? cvFromScroll() : 0);
-  }
+  if (!animating) { const now = indexFromScroll(); if (now !== cur) setActive(now); }
 }
-function onScroll() { markMoving(); if (!rafScroll) rafScroll = requestAnimationFrame(frame); }
+function onScroll() { if (!rafScroll) rafScroll = requestAnimationFrame(frame); }
 window.addEventListener('scroll', onScroll, { passive: true });
-const remeasure = () => { measure(); scrub?.layout(); onScroll(); };
+const remeasure = () => { measure(); onScroll(); };
 window.addEventListener('resize', remeasure);
 new ResizeObserver(remeasure).observe($('#contenido'));
 document.fonts?.ready.then(remeasure);
 
-/* ------------------------------------------------------------ revelado */
+/* ------------------------------------------------------------ revelado (una vez, 0,4 s) */
 const io = new IntersectionObserver((entries) => {
-  entries.forEach((e) => {
-    if (!e.isIntersecting) return;
-    e.target.classList.add('in');
-    if (e.target.hasAttribute('data-stats')) countUp(e.target);
-    io.unobserve(e.target);
-  });
-}, { threshold: 0.2 });
-$$('[data-reveal], [data-line], [data-stats]').forEach((el) => io.observe(el));
+  entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.25 });
+$$('[data-reveal], [data-line]').forEach((el) => io.observe(el));
 
-/* --------------------------------------------------------- pantalla completa (tecla F) */
+/* ------------------------------------------------------- teclado y botones */
 function toggleFullscreen() {
   const p = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
   p?.catch(() => {});
 }
 document.addEventListener('fullscreenchange', () => setTimeout(remeasure, 120));
-
-/* ------------------------------------------------------- teclado y botones */
 document.addEventListener('click', (e) => {
   const a = e.target.closest('[data-goto]');
   if (!a) return;
   e.preventDefault();
-  goTo(Number(a.dataset.goto), { announce: true, focus: true });
+  goTo(Number(a.dataset.goto));
 });
-$('#btnPrev').addEventListener('click', () => advance(-1));
-$('#btnNext').addEventListener('click', () => advance(1));
-
 document.addEventListener('keydown', (e) => {
   if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
   const t = e.target;
   if (t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
   const key = e.key;
-  const run = (fn2) => { e.preventDefault(); if (!e.repeat) fn2(); };
-  if (key === 'ArrowRight' || key === 'PageDown') return run(() => advance(1));
+  const run = (fn) => { e.preventDefault(); if (!e.repeat) fn(); };
+  if (key === 'ArrowRight' || key === 'ArrowDown' || key === 'PageDown') return run(() => advance(1));
   if (key === ' ' || key === 'Spacebar') return run(() => advance(e.shiftKey ? -1 : 1));
-  if (key === 'ArrowLeft' || key === 'PageUp') return run(() => advance(-1));
+  if (key === 'ArrowLeft' || key === 'ArrowUp' || key === 'PageUp') return run(() => advance(-1));
   if (key === 'Home') return run(() => goTo(0));
   if (key === 'End') return run(() => goTo(LAST));
-  if (/^[1-7]$/.test(key) && !e.shiftKey) return run(() => goTo(Number(key)));
+  if (/^[1-6]$/.test(key) && !e.shiftKey) return run(() => goTo(blockStart[Number(key) - 1]));
   if (key === 'f' || key === 'F') return run(toggleFullscreen);
-  if (key === 'l' || key === 'L') return run(() => { liteDecided = true; setLite(!document.documentElement.classList.contains('lite'), 'manual'); });
   return undefined;
 });
 
-/* ----------------------------------------------- fondo: video real cuadro a cuadro */
-// Sin video con movimiento reducido, modo liviano o ahorro de datos: queda el póster con las cajas.
-function videoAllowed() {
-  const c = navigator.connection;
-  const saveData = Boolean(c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || '')));
-  return !reduced() && !document.documentElement.classList.contains('lite') && !saveData;
-}
-
 /* ------------------------------------------------------------------ inicio */
 measure();
-const initial = chapters.findIndex((c) => `#${c.id}` === location.hash);
-scrub = mountScrub($('#stage'), {
-  scenes: [
-    // B: fondo de toda la página (tenue fuera de la portada)
-    { id: 'scene-b', base: true, clip: 'media/scene-b.mp4', clipM: 'media/scene-b-m.mp4', poster: 'media/scene-b-poster' },
-    // A: la demo, encima, solo mientras dura la secuencia
-    { id: 'scene-a', clip: 'media/scene-a.mp4', clipM: 'media/scene-a-m.mp4', poster: 'media/scene-a-poster', frameMap: (p) => frameFor(p * SEQ_STEPS) },
-  ],
-  bounds: () => [{ start: tops[0], end: tops[LAST] }, { start: seqTop(), end: seqTop() + SEQ_STEPS * cvStepPx() }],
-  tracksUrl: 'media/tracks.json',
-  zones: { 'scene-a': [{ label: 'comedero', poly: [[0.42, 0.52], [0.98, 0.52], [0.98, 0.8], [0.42, 0.78]] }] },
-  onActive: markMoving,
-  onFrame: ({ count, seen }) => {
-    if (cur === DEMO && cvStage > 0) cvMetrics.textContent = `${count} vacas en cuadro · ${seen} IDs`;
-  },
-});
-// El video se pide recién con la primera intención (scroll, tecla o toque). Hasta entonces, cajas sobre el póster.
-const enableVideo = () => scrub.setEnabled(videoAllowed());
-const INTENT = ['scroll', 'keydown', 'pointerdown', 'touchstart', 'wheel'];
-const onIntent = () => {
-  if (intent) return;
-  intent = true;
-  INTENT.forEach((ev) => window.removeEventListener(ev, onIntent));
-  enableVideo();
-};
-INTENT.forEach((ev) => window.addEventListener(ev, onIntent, { passive: true }));
-reduceQuery.addEventListener?.('change', () => { if (intent) enableVideo(); });
-
-if (initial > 0) { onIntent(); setActive(initial, { hash: false }); window.scrollTo(0, tops[initial]); } else { setActive(0, { hash: false }); }
+const fromHash = Number((location.hash.match(/^#(\d+)$/) || [])[1]) - 1;
+if (fromHash > 0 && fromHash <= LAST) { setActive(fromHash, { hash: false }); window.scrollTo(0, tops[fromHash]); } else { setActive(0, { hash: false }); }
 frame();
 window.addEventListener('load', remeasure);
-setTimeout(() => $('#intro')?.remove(), 2300);
 
 // Para pruebas automáticas.
-window.__agrocow = { goTo, advance, get current() { return cur; }, get cvStage() { return cvStage; }, get scrub() { return scrub.state; } };
+window.__agrocow = { goTo, advance, get current() { return cur; }, count: screens.length, blockStart };

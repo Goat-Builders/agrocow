@@ -18,7 +18,7 @@ npm run preview   # sirve dist/
 |---|---|---|
 | 1 · Problema | 1 Cuatro segundos por vaca · 2 pregunta «¿Cuántos enfermos se les escaparían?» · 3 «3 DE CADA 4» · 4 «1 VACA muere cada 10 minutos» · 5 «80.000 USD de pérdidas anuales» (feedlot de 1.000 cabezas) · 6 «100 A 150 terneros se podrían comprar con esas pérdidas» | 0:00–0:30 |
 | 2 · Por qué ahora y nosotros | 7 El recorredor trabaja todo el día, es propenso a errores (ilustración) · 8 Somos AgroCow | 0:30–0:50 |
-| 3 · Solución | 9 «ASÍ FUNCIONA AGROCOW» → 10 **video del MVP** (`public/media/mvp.mp4`, arranca solo al llegar y se pausa al salir; clic para pausar) → 11 tres pasos (cámaras · detecta el cambio · alerta al celular) · 12 Va directo a quien lo necesita (1.000 puntos, uno resaltado) | 0:50–1:30 |
+| 3 · Solución | 9 «ASÍ FUNCIONA AGROCOW» → 10 **video del MVP** (`public/media/mvp.mp4`, arranca solo al llegar, se repite en bucle y se pausa al salir; clic para pausar) → 11 tres pasos (cámaras · detecta el cambio · alerta al celular) · 12 Va directo a quien lo necesita (1.000 puntos, uno resaltado) | 0:50–1:30 |
 | 4 · Mercado y negocio | 13 «+4 MILLONES» · 14 «1.000 MILLONES» sobre el mapa · 15 Cobramos un abono por cabeza (más ganado, más ganamos) · 16 pregunta «¿Cómo entramos al mercado?» · 17 piloto → todo el feedlot → feedlots más grandes → otros países | 1:30–2:05 |
 | 5 · Cierre | 18 «TRATARLO O ~ENTERRARLO~» (en rojo sangre) · «Con AgroCow, lo ve a tiempo» | 2:05–2:20 |
 

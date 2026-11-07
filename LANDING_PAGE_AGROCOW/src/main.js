@@ -77,7 +77,7 @@ const RENDER = {
     <h2 id="${hid(i)}" tabindex="-1" class="sr-only">${s.title}</h2>
     <figure class="mvp" data-reveal>
       <div class="mvp-frame">
-        <video class="mvp-video" src="${s.src}" poster="${s.poster}" muted playsinline preload="metadata" width="1280" height="720" aria-label="${s.title}"></video>
+        <video class="mvp-video" src="${s.src}" poster="${s.poster}" muted playsinline loop preload="metadata" width="1280" height="720" aria-label="${s.title}"></video>
         <button class="mvp-play" type="button" aria-label="Reproducir video">${svg('0 0 24 24', '<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>')}</button>
       </div>
       <figcaption class="mvp-cap">${s.cap}</figcaption>

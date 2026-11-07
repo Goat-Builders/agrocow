@@ -4,7 +4,7 @@
 export const REPO_URL = 'https://github.com/felipebridge/agrocow';
 
 // Nombres del equipo y del hackathon: pendientes. Si el array está vacío no se muestra nada.
-export const TEAM = [];
+export const TEAM = ['Matías Rodrigo Bellido', 'Felipe Bridge', 'Emiliano Lescuras', 'Valentin Ruvera'];
 export const EVENT_NAME = '';
 
 export const hero = {

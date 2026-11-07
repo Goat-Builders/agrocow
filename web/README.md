@@ -25,6 +25,6 @@ Con `prefers-reduced-motion` no hay parallax y los saltos son instantáneos.
 
 ## Pendientes
 
-- Nombres del equipo y del hackathon: `TEAM` y `EVENT_NAME` en `src/content.js` (vacíos, no se muestran).
+- Nombre del hackathon: `EVENT_NAME` en `src/content.js` (vacío, no se muestra). El equipo (`TEAM`) ya está cargado; solo nombres, sin mails, porque el sitio es público.
 - "En desarrollo" en el capítulo Estado dice "A confirmar con el equipo".
 - Mantener `src/content.js` alineado con el README cuando cambie el código.

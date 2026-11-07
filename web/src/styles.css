@@ -242,7 +242,7 @@ td.num { white-space: nowrap; }
 .status-col .tag { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: var(--muted); }
 .status-col li { color: var(--muted); font-size: 1.02rem; padding: 6px 0; border-top: 1px solid var(--line); }
 .status-col li:first-child { border-top: 0; padding-top: 0; }
-.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 32px; padding-top: 1.5rem; border-top: 1px solid var(--line); font-family: 'IBM Plex Mono', monospace; font-size: 0.9rem; color: var(--muted); }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0 32px; padding-top: 1rem; border-top: 1px solid var(--line); font-family: 'IBM Plex Mono', monospace; font-size: 0.9rem; color: var(--muted); }
 .foot a { min-height: 44px; display: inline-flex; align-items: center; }
 .foot .back { color: var(--amber); }
 
